@@ -62,28 +62,6 @@ The application is designed so that:
 
 ---
 
-## Project Structure
-
-```text
-codeforge/
-│
-├── .gitignore
-├── README.md
-├── requirements.txt
-├── main.py
-│
-├── database/
-│
-├── app/
-│   ├── models/
-│   ├── repositories/
-│   ├── services/
-│   ├── gui/
-│   └── analytics/
-│
-└── tests/
-```
-
 > The project structure will evolve as development progresses.
 
 ---
