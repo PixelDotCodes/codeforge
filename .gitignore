@@ -4,3 +4,6 @@ __pycache__/
 .env
 *.bkp
 test/
+test_import.csv
+smoke_test.py
+verify.sql
