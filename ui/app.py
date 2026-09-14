@@ -9,6 +9,16 @@ Analytics, and Import screens.
 import tkinter as tk
 from tkinter import ttk
 
+from repositories import (
+    ActivityRepository,
+    ProblemRepository,
+    RevisionRepository,
+    TopicRepository,
+)
+from services.activity_service import ActivityService
+from services.analytics_service import AnalyticsService
+from services.problem_service import ProblemService
+from services.revision_service import RevisionService
 from ui.styles import (
     COLOR_BG,
     COLOR_NAV_ACTIVE_BG,
@@ -57,7 +67,17 @@ class CodeForgeApp(tk.Tk):
         "Import": ImportView,
     }
 
-    def __init__(self):
+    def __init__(
+        self,
+        problem_repository=None,
+        activity_repository=None,
+        revision_repository=None,
+        topic_repository=None,
+        problem_service=None,
+        revision_service=None,
+        activity_service=None,
+        analytics_service=None,
+    ):
         super().__init__()
 
         # 1. Window setup
@@ -69,15 +89,30 @@ class CodeForgeApp(tk.Tk):
         # 2. Configure ttk styles
         self.style = configure_styles(self)
 
-        # 3. Application State
+        # 3. Initialize Repositories & Services
+        self.problem_repository = problem_repository or ProblemRepository()
+        self.activity_repository = activity_repository or ActivityRepository()
+        self.revision_repository = revision_repository or RevisionRepository()
+        self.topic_repository = topic_repository or TopicRepository()
+
+        self.problem_service = problem_service or ProblemService(self.problem_repository)
+        self.revision_service = revision_service or RevisionService(self.revision_repository)
+        self.activity_service = activity_service or ActivityService(self.activity_repository)
+        self.analytics_service = analytics_service or AnalyticsService(
+            problem_repository=self.problem_repository,
+            activity_repository=self.activity_repository,
+            topic_repository=self.topic_repository,
+        )
+
+        # 4. Application State
         self.current_view_name = None
         self.views = {}
         self.nav_buttons = {}
 
-        # 4. Build application layout
+        # 5. Build application layout
         self._build_shell()
 
-        # 5. Show initial view
+        # 6. Show initial view
         self.show_view("Dashboard")
 
     def _build_shell(self):
