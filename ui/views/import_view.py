@@ -58,6 +58,13 @@ class ImportView(ttk.Frame):
             return self.app.activity_service
         return None
 
+    @property
+    def topic_service(self):
+        if self.app is not None and hasattr(self.app, "topic_service"):
+            return self.app.topic_service
+        return None
+
+
     def _build_ui(self):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
@@ -188,12 +195,13 @@ class ImportView(ttk.Frame):
         guide_title.pack(anchor="w", pady=(0, 8))
 
         guide_content = (
-            "Required fields for CSV / JSON import:\n\n"
+            "Fields for CSV / JSON import:\n\n"
             "• platform: e.g. 'LeetCode', 'Codeforces'\n"
             "• question_number: Positive integer (e.g. 1, 42)\n"
             "• title: Problem title string\n"
             "• difficulty: 'Easy', 'Medium', or 'Hard'\n"
-            "• problem_url: Valid problem link URL\n\n"
+            "• problem_url: Valid problem link URL\n"
+            "• topics (optional): e.g. 'Hash Map|Array'\n\n"
             "All rows are validated via ProblemService before persisting."
         )
         guide_label = tk.Label(
@@ -317,6 +325,18 @@ class ImportView(ttk.Frame):
 
         self._append_log(f"Found {len(records)} entries. Processing...")
 
+        # Pre-fetch existing topics from TOPIC table for user-driven association
+        all_topics = []
+        if self.topic_service:
+            all_topics = self.topic_service.get_all_topics() or []
+        elif self.app and hasattr(self.app, "topic_repository") and self.app.topic_repository:
+            all_topics = self.app.topic_repository.get_all_topics() or []
+        topic_lookup = {
+            t["topic_name"].strip().lower(): t
+            for t in all_topics
+            if isinstance(t, dict) and "topic_name" in t
+        }
+
         success_count = 0
         fail_count = 0
 
@@ -332,6 +352,17 @@ class ImportView(ttk.Frame):
             difficulty = item.get("difficulty", "").strip()
             url = item.get("problem_url", "").strip()
 
+            # Optional topics column (e.g. "Hash Map|Array" or "Two Pointers")
+            raw_topics = item.get("topics") or item.get("topic") or ""
+            topic_names = []
+            if raw_topics and isinstance(raw_topics, str):
+                if "|" in raw_topics:
+                    topic_names = [t.strip() for t in raw_topics.split("|") if t.strip()]
+                elif "," in raw_topics:
+                    topic_names = [t.strip() for t in raw_topics.split(",") if t.strip()]
+                elif raw_topics.strip():
+                    topic_names = [raw_topics.strip()]
+
             try:
                 qno = int(raw_qno)
             except (ValueError, TypeError):
@@ -339,6 +370,7 @@ class ImportView(ttk.Frame):
                 fail_count += 1
                 continue
 
+            target_problem_id = None
             try:
                 new_p = self.problem_service.add_problem(
                     platform=platform,
@@ -358,14 +390,54 @@ class ImportView(ttk.Frame):
                     except Exception:
                         pass
 
+                if new_p:
+                    target_problem_id = new_p.get("problem_id")
                 success_count += 1
                 self._append_log(f"[SUCCESS] Row {idx}: Added #{qno} {title} ({difficulty})")
             except ValueError as ve:
                 self._append_log(f"[VALIDATION ERROR] Row {idx}: {ve}")
                 fail_count += 1
+                continue
             except Exception as dbe:
-                self._append_log(f"[DATABASE ERROR] Row {idx}: {dbe}")
-                fail_count += 1
+                # If problem already exists in database, look it up so we can still associate topics
+                existing_prob = None
+                if self.app and hasattr(self.app, "problem_repository"):
+                    try:
+                        existing_prob = self.app.problem_repository.get_problem_by_platform_and_question_number(platform, qno)
+                    except Exception:
+                        existing_prob = None
+
+                if existing_prob:
+                    target_problem_id = existing_prob.get("problem_id")
+                    self._append_log(f"[INFO] Row {idx}: #{qno} '{title}' already exists. Updating topic associations...")
+                    success_count += 1
+                else:
+                    self._append_log(f"[DATABASE ERROR] Row {idx}: {dbe}")
+                    fail_count += 1
+                    continue
+
+            # Process user-driven topic associations if topics were supplied
+            if target_problem_id and topic_names:
+                for tname in topic_names:
+                    matched = topic_lookup.get(tname.lower())
+                    if matched:
+                        tid = matched.get("topic_id")
+                        canonical_name = matched.get("topic_name", tname)
+                        if self.topic_service:
+                            try:
+                                self.topic_service.assign_topic_to_problem(target_problem_id, tid)
+                                self._append_log(f"  [TOPIC] Associated with '{canonical_name}'")
+                            except Exception as te:
+                                self._append_log(f"  [TOPIC ERROR] Could not associate '{canonical_name}': {te}")
+                        elif self.app and hasattr(self.app, "topic_repository"):
+                            try:
+                                self.app.topic_repository.add_problem_topic(target_problem_id, tid)
+                                self._append_log(f"  [TOPIC] Associated with '{canonical_name}'")
+                            except Exception as te:
+                                self._append_log(f"  [TOPIC ERROR] Could not associate '{canonical_name}': {te}")
+                    else:
+                        self._append_log(f"  [UNKNOWN TOPIC] '{tname}' not found in TOPIC records (skipped)")
+
 
         self._append_log(f"\n--- Import finished: {success_count} succeeded, {fail_count} failed ---")
         messagebox.showinfo(

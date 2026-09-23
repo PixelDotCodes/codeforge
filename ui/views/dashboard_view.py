@@ -1,8 +1,9 @@
 """
 Dashboard View
 
-Provides an overview of problem-solving statistics, streaks, upcoming revisions,
-and user activity heatmap.
+Provides an overview of problem-solving statistics, streaks,
+LeetCode-style contribution heatmap, suggested questions for review,
+and recent user activity.
 Connects Tkinter UI -> AnalyticsService / RevisionService / ActivityService.
 """
 
@@ -40,6 +41,8 @@ class DashboardView(ttk.Frame):
         self._analytics_service = analytics_service
         self._revision_service = revision_service
         self._activity_service = activity_service
+        self._cell_map = {}
+        self._last_heatmap_summary = ""
         self._build_ui()
 
     @property
@@ -87,7 +90,7 @@ class DashboardView(ttk.Frame):
 
         subtitle_label = ttk.Label(
             header_frame,
-            text="Overview of your coding practice, activity streak, and upcoming revisions.",
+            text="Overview of your coding practice, activity streak, and review recommendations.",
             style="HeaderSubtitle.TLabel",
         )
         subtitle_label.pack(anchor="w", pady=(2, 0))
@@ -102,7 +105,7 @@ class DashboardView(ttk.Frame):
         self.metric_cards = {}
         metrics_spec = [
             ("Total Solved", "0", "problems"),
-            ("Due Revision", "0", "scheduled"),
+            ("Due Revision", "0", "review suggestions"),
             ("Current Streak", "0", "days"),
             ("Active Days", "0", "total"),
         ]
@@ -147,7 +150,7 @@ class DashboardView(ttk.Frame):
 
             self.metric_cards[title] = lbl_value
 
-        # 3. Activity Heatmap Section
+        # 3. LeetCode-style Activity Heatmap Section
         self.heatmap_card = tk.Frame(
             self,
             bg=COLOR_CARD_BG,
@@ -159,7 +162,7 @@ class DashboardView(ttk.Frame):
         self.heatmap_card.grid(row=2, column=0, sticky="ew", padx=PAD_OUTER_X, pady=(0, 12))
 
         heatmap_header = tk.Frame(self.heatmap_card, bg=COLOR_CARD_BG)
-        heatmap_header.pack(fill="x", pady=(0, 8))
+        heatmap_header.pack(fill="x", pady=(0, 6))
 
         heatmap_title = tk.Label(
             heatmap_header,
@@ -170,43 +173,78 @@ class DashboardView(ttk.Frame):
         )
         heatmap_title.pack(side="left")
 
-        heatmap_legend = tk.Label(
-            heatmap_header,
-            text="Less  ■ ■ ■ ■  More",
+        # Intensity Legend
+        legend_frame = tk.Frame(heatmap_header, bg=COLOR_CARD_BG)
+        legend_frame.pack(side="right")
+
+        tk.Label(
+            legend_frame,
+            text="Less",
             bg=COLOR_CARD_BG,
             fg=COLOR_TEXT_MUTED,
             font=FONT_CAPTION,
-        )
-        heatmap_legend.pack(side="right")
+        ).pack(side="left", padx=(0, 4))
+
+        for color_hex in ["#252d3d", "#0e4429", "#007335", "#00b84c", "#39d353"]:
+            sq = tk.Frame(
+                legend_frame,
+                bg=color_hex,
+                width=10,
+                height=10,
+                highlightthickness=1,
+                highlightbackground="#334155",
+            )
+            sq.pack(side="left", padx=1)
+            sq.pack_propagate(False)
+
+        tk.Label(
+            legend_frame,
+            text="More",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT_MUTED,
+            font=FONT_CAPTION,
+        ).pack(side="left", padx=(4, 0))
 
         self.heatmap_container = tk.Frame(
             self.heatmap_card,
             bg=COLOR_BG,
             highlightbackground=COLOR_CARD_BORDER,
             highlightthickness=1,
-            padx=PAD_INNER,
-            pady=16,
+            padx=8,
+            pady=8,
         )
         self.heatmap_container.pack(fill="x")
 
+        # Canvas for LeetCode-style grid
+        self.heatmap_canvas = tk.Canvas(
+            self.heatmap_container,
+            bg=COLOR_BG,
+            height=125,
+            highlightthickness=0,
+        )
+        self.heatmap_canvas.pack(fill="x", expand=True)
+        self.heatmap_canvas.bind("<Motion>", self._on_heatmap_motion)
+        self.heatmap_canvas.bind("<Leave>", self._on_heatmap_leave)
+
         self.heatmap_label = tk.Label(
             self.heatmap_container,
-            text="▦  Activity Heatmap (52-Week Grid)\nDaily practice frequency and streak heatmap will be rendered here.",
+            text="Loading activity heatmap...",
             bg=COLOR_BG,
             fg=COLOR_TEXT_MUTED,
-            font=FONT_BODY,
+            font=FONT_CAPTION,
             justify="center",
+            pady=4,
         )
-        self.heatmap_label.pack(expand=True)
+        self.heatmap_label.pack(fill="x")
 
         # 4. Two-column Activity & Schedule section
         middle_frame = ttk.Frame(self, style="Content.TFrame")
         middle_frame.grid(row=3, column=0, sticky="nsew", padx=PAD_OUTER_X, pady=(0, 12))
         middle_frame.columnconfigure(0, weight=3, uniform="middle")
-        middle_frame.columnconfigure(1, weight=2, uniform="middle")
+        middle_frame.columnconfigure(1, weight=3, uniform="middle")
         middle_frame.rowconfigure(0, weight=1)
 
-        # Left Card: Recent Activity
+        # Left Card: Recent Problem Activity (Preserved)
         self.recent_card = tk.Frame(
             middle_frame,
             bg=COLOR_CARD_BG,
@@ -240,7 +278,7 @@ class DashboardView(ttk.Frame):
         )
         self.recent_placeholder.pack(fill="both", expand=True)
 
-        # Right Card: Revision Schedule
+        # Right Card: Suggested Questions to Review (Replaces "Revisions Due Today")
         self.revision_card = tk.Frame(
             middle_frame,
             bg=COLOR_CARD_BG,
@@ -251,21 +289,22 @@ class DashboardView(ttk.Frame):
         )
         self.revision_card.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
 
-        revision_title = tk.Label(
+        self.suggested_title = tk.Label(
             self.revision_card,
-            text="Revisions Due Today",
+            text="Suggested Questions to Review",
             bg=COLOR_CARD_BG,
             fg=COLOR_TEXT_PRIMARY,
             font=FONT_CARD_TITLE,
         )
-        revision_title.pack(anchor="w", pady=(0, 8))
+        self.suggested_title.pack(anchor="w", pady=(0, 8))
 
         self.revision_container = tk.Frame(self.revision_card, bg=COLOR_CARD_BG)
         self.revision_container.pack(fill="both", expand=True)
+        self.suggested_container = self.revision_container
 
         self.revision_placeholder = tk.Label(
             self.revision_container,
-            text="No revisions due today.\nSchedule problem reviews to build long-term retention.",
+            text="No questions eligible for review.\nSolve more problems or log practices to build your review queue.",
             bg=COLOR_CARD_BG,
             fg=COLOR_TEXT_MUTED,
             font=FONT_BODY,
@@ -274,7 +313,7 @@ class DashboardView(ttk.Frame):
         )
         self.revision_placeholder.pack(fill="both", expand=True)
 
-        # 5. Footer Note
+        # 5. Footer Note with Top Practiced Problem Badge
         footer_card = tk.Frame(
             self,
             bg=COLOR_CARD_BG,
@@ -287,12 +326,21 @@ class DashboardView(ttk.Frame):
 
         tip_label = tk.Label(
             footer_card,
-            text="💡 Tip: Solve problems consistently and log revisions. Spaced repetition builds long-term retention.",
+            text="💡 Spaced repetition strategy: Review new problems at 1 day, 3 days, and 7 days.",
             bg=COLOR_CARD_BG,
             fg=COLOR_TEXT_SECONDARY,
             font=FONT_BODY,
         )
-        tip_label.pack(anchor="w")
+        tip_label.pack(side="left")
+
+        self.top_problem_label = tk.Label(
+            footer_card,
+            text="",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT_MUTED,
+            font=FONT_CAPTION,
+        )
+        self.top_problem_label.pack(side="right")
 
     def refresh_dashboard(self):
         """Fetch latest statistics from backend services and update UI."""
@@ -306,28 +354,16 @@ class DashboardView(ttk.Frame):
         if "Total Solved" in self.metric_cards:
             self.metric_cards["Total Solved"].configure(text=str(total_solved))
 
-        # 2. Due Revisions from RevisionService
-        due_count = 0
-        revisions_due = []
-        today_date = date.today()
-        if self.revision_service:
+        # 2. Suggested Questions to Review from AnalyticsService
+        suggested = []
+        if self.analytics_service and hasattr(self.analytics_service, "get_suggested_questions_for_review"):
             try:
-                all_revs = self.revision_service.get_all_revisions() or []
-                for r in all_revs:
-                    r_date = r.get("revision_date")
-                    if isinstance(r_date, str):
-                        try:
-                            r_date = date.fromisoformat(r_date.strip())
-                        except ValueError:
-                            continue
-                    if r_date and r_date <= today_date:
-                        due_count += 1
-                        if r_date == today_date:
-                            revisions_due.append(r)
+                suggested = self.analytics_service.get_suggested_questions_for_review(limit=5) or []
             except Exception:
-                due_count = 0
+                suggested = []
+
         if "Due Revision" in self.metric_cards:
-            self.metric_cards["Due Revision"].configure(text=str(due_count))
+            self.metric_cards["Due Revision"].configure(text=str(len(suggested)))
 
         # 3. Heatmap Data & Streak from AnalyticsService
         heatmap_data = {}
@@ -344,23 +380,149 @@ class DashboardView(ttk.Frame):
         if "Active Days" in self.metric_cards:
             self.metric_cards["Active Days"].configure(text=str(active_days))
 
+        # Render real LeetCode-style contribution heatmap
+        self._render_heatmap(heatmap_data)
+
         # Update Heatmap Label summary
         if heatmap_data:
             total_act = sum(heatmap_data.values())
-            self.heatmap_label.configure(
-                text=f"Total Practice Sessions: {total_act} across {active_days} active days.\n"
-                     f"Current Streak: {streak} consecutive days."
+            summary_text = (
+                f"Total Practice Sessions: {total_act} across {active_days} active days • "
+                f"Current Streak: {streak} consecutive days"
             )
         else:
-            self.heatmap_label.configure(
-                text="▦  Activity Heatmap (52-Week Grid)\nNo activity logged yet. Solve problems or log revisions to see your activity."
-            )
+            summary_text = "No activity logged yet. Solve problems or log revisions to see your activity."
 
-        # 4. Recent Activity from ActivityService
+        self._last_heatmap_summary = summary_text
+        self.heatmap_label.configure(text=summary_text)
+
+        # 4. Top Practiced Problem
+        if self.analytics_service and hasattr(self.analytics_service, "get_top_practiced_problem"):
+            try:
+                top_prob = self.analytics_service.get_top_practiced_problem()
+                if top_prob:
+                    title = top_prob.get("title", "")
+                    plat = top_prob.get("platform", "")
+                    qno = top_prob.get("platform_question_no", "")
+                    cnt = top_prob.get("practice_count", 0)
+                    t_str = "practice" if cnt == 1 else "practices"
+                    ref = f"{plat} #{qno}" if plat and qno else f"#{top_prob.get('problem_id')}"
+                    self.top_problem_label.configure(
+                        text=f"⭐ Top Practiced: {title} ({ref} • {cnt} {t_str})"
+                    )
+                else:
+                    self.top_problem_label.configure(text="")
+            except Exception:
+                self.top_problem_label.configure(text="")
+
+        # 5. Recent Activity from ActivityService
         self._update_recent_activity()
 
-        # 5. Revisions Due Today
-        self._update_revisions_due(revisions_due)
+        # 6. Suggested Questions to Review (max 5)
+        self._update_suggested_reviews(suggested)
+
+    def _render_heatmap(self, heatmap_data):
+        """Draw LeetCode-style calendar contribution heatmap on Tkinter Canvas."""
+        self.heatmap_canvas.delete("all")
+        self._cell_map.clear()
+
+        today = date.today()
+        # LeetCode grid: 7 rows (Sunday to Saturday) across 52 weeks
+        days_since_sunday = (today.weekday() + 1) % 7
+        this_sunday = today - timedelta(days=days_since_sunday)
+        start_sunday = this_sunday - timedelta(weeks=51)
+
+        cell_size = 10
+        gap = 3
+        step = cell_size + gap
+        margin_left = 32
+        margin_top = 20
+
+        # Day of week labels on left
+        day_labels = {1: "Mon", 3: "Wed", 5: "Fri"}
+        for r_idx, d_name in day_labels.items():
+            y_pos = margin_top + r_idx * step + cell_size // 2
+            self.heatmap_canvas.create_text(
+                margin_left - 6,
+                y_pos,
+                text=d_name,
+                fill="#64748b",
+                font=("Segoe UI", 7),
+                anchor="e",
+            )
+
+        last_month = None
+
+        for col in range(52):
+            for row in range(7):
+                day_offset = col * 7 + row
+                curr_d = start_sunday + timedelta(days=day_offset)
+                x1 = margin_left + col * step
+                y1 = margin_top + row * step
+                x2 = x1 + cell_size
+                y2 = y1 + cell_size
+
+                # Month label along the top
+                if row == 0:
+                    curr_month = curr_d.strftime("%b")
+                    if curr_month != last_month and col < 51:
+                        self.heatmap_canvas.create_text(
+                            x1,
+                            8,
+                            text=curr_month,
+                            fill="#64748b",
+                            font=("Segoe UI", 8),
+                            anchor="w",
+                        )
+                        last_month = curr_month
+
+                if curr_d > today:
+                    continue
+
+                cnt = heatmap_data.get(curr_d, 0)
+                if cnt == 0:
+                    fill_col = "#252d3d"
+                    outline_col = "#334155"
+                elif cnt <= 2:
+                    fill_col = "#0e4429"
+                    outline_col = "#166534"
+                elif cnt <= 4:
+                    fill_col = "#007335"
+                    outline_col = "#22c55e"
+                elif cnt <= 6:
+                    fill_col = "#00b84c"
+                    outline_col = "#4ade80"
+                else:
+                    fill_col = "#39d353"
+                    outline_col = "#86efac"
+
+                rect_id = self.heatmap_canvas.create_rectangle(
+                    x1, y1, x2, y2,
+                    fill=fill_col,
+                    outline=outline_col,
+                    tags=("cell",),
+                )
+                self._cell_map[rect_id] = (curr_d, cnt)
+
+    def _on_heatmap_motion(self, event):
+        """Display tooltip/details for hovered heatmap cell."""
+        item = self.heatmap_canvas.find_withtag("current")
+        if item and item[0] in self._cell_map:
+            curr_d, cnt = self._cell_map[item[0]]
+            s_word = "submission" if cnt == 1 else "submissions"
+            date_str = curr_d.strftime("%B %d, %Y")
+            self.heatmap_label.configure(
+                text=f"{cnt} {s_word} on {date_str}"
+            )
+        else:
+            self._restore_heatmap_summary()
+
+    def _on_heatmap_leave(self, event):
+        self._restore_heatmap_summary()
+
+    def _restore_heatmap_summary(self):
+        if self._last_heatmap_summary:
+            self.heatmap_label.configure(text=self._last_heatmap_summary)
 
     def _calculate_streak(self, heatmap_data):
         """Calculate consecutive active days ending today or yesterday."""
@@ -382,7 +544,7 @@ class DashboardView(ttk.Frame):
         return streak
 
     def _update_recent_activity(self):
-        """Display recent activity items in recent_container."""
+        """Display recent activity items in recent_container (Preserved)."""
         for widget in self.recent_container.winfo_children():
             widget.destroy()
 
@@ -418,15 +580,15 @@ class DashboardView(ttk.Frame):
             tk.Label(row, text=txt, bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY).pack(side="left")
             tk.Label(row, text=str(act_date), bg=COLOR_CARD_BG, fg=COLOR_TEXT_MUTED, font=FONT_CAPTION).pack(side="right")
 
-    def _update_revisions_due(self, revisions_due):
-        """Display due revisions in revision_container."""
+    def _update_suggested_reviews(self, suggestions):
+        """Display up to 5 suggested questions to review based on practice history."""
         for widget in self.revision_container.winfo_children():
             widget.destroy()
 
-        if not revisions_due:
+        if not suggestions:
             lbl = tk.Label(
                 self.revision_container,
-                text="No revisions due today.\nSchedule problem reviews to build long-term retention.",
+                text="No questions eligible for review.\nSolve more problems or log practices to build your review queue.",
                 bg=COLOR_CARD_BG,
                 fg=COLOR_TEXT_MUTED,
                 font=FONT_BODY,
@@ -436,12 +598,65 @@ class DashboardView(ttk.Frame):
             lbl.pack(fill="both", expand=True)
             return
 
-        for rev in revisions_due[:5]:
-            prob_id = rev.get("problem_id", "")
-            rev_type = rev.get("revision_type", "Review")
-            row = tk.Frame(self.revision_container, bg=COLOR_CARD_BG, pady=3)
+        for item in suggestions[:5]:
+            title = item.get("title", "")
+            plat = item.get("platform", "")
+            qno = item.get("platform_question_no", "")
+            diff = item.get("difficulty", "Medium")
+            cnt = item.get("practice_count", 0)
+
+            row = tk.Frame(self.revision_container, bg=COLOR_CARD_BG, pady=4)
             row.pack(fill="x")
 
-            txt = f"• Problem #{prob_id} — {rev_type}"
-            tk.Label(row, text=txt, bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY).pack(side="left")
-            tk.Label(row, text="Due today", bg=COLOR_CARD_BG, fg="#38bdf8", font=FONT_CAPTION).pack(side="right")
+            left_box = tk.Frame(row, bg=COLOR_CARD_BG)
+            left_box.pack(side="left", fill="x", expand=True)
+
+            ref = f"{plat} #{qno}" if plat and qno else f"#{item.get('problem_id')}"
+            tk.Label(
+                left_box,
+                text=ref,
+                bg=COLOR_CARD_BG,
+                fg=COLOR_TEXT_MUTED,
+                font=FONT_CAPTION,
+            ).pack(side="left", padx=(0, 6))
+
+            disp_title = (title[:26] + "…") if len(title) > 28 else title
+            tk.Label(
+                left_box,
+                text=disp_title,
+                bg=COLOR_CARD_BG,
+                fg=COLOR_TEXT_PRIMARY,
+                font=FONT_BODY,
+            ).pack(side="left")
+
+            right_box = tk.Frame(row, bg=COLOR_CARD_BG)
+            right_box.pack(side="right")
+
+            diff_color = "#22c55e" if diff == "Easy" else ("#ef4444" if diff == "Hard" else "#f59e0b")
+            tk.Label(
+                right_box,
+                text=diff,
+                bg=COLOR_CARD_BG,
+                fg=diff_color,
+                font=FONT_CAPTION,
+            ).pack(side="left", padx=(0, 8))
+
+            c_text = "0 practices" if cnt == 0 else (f"{cnt} practice" if cnt == 1 else f"{cnt} practices")
+            tk.Label(
+                right_box,
+                text=c_text,
+                bg=COLOR_CARD_BG,
+                fg="#38bdf8",
+                font=FONT_CAPTION,
+            ).pack(side="left")
+
+    def _update_revisions_due(self, revisions_due):
+        """Backward-compatibility alias for test suites."""
+        if hasattr(self, "analytics_service") and self.analytics_service and hasattr(self.analytics_service, "get_suggested_questions_for_review"):
+            try:
+                suggestions = self.analytics_service.get_suggested_questions_for_review(limit=5) or []
+                self._update_suggested_reviews(suggestions)
+                return
+            except Exception:
+                pass
+        self._update_suggested_reviews(revisions_due)

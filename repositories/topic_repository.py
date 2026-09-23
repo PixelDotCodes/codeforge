@@ -151,3 +151,70 @@ class TopicRepository:
         with self._get_cursor() as cur:
             cur.execute(query, (topic_id,))
             return [self._problem_topic_row_to_dict(r) for r in cur.fetchall()]
+
+    def get_topic_by_name(self, topic_name):
+        """Return a single TOPIC row matching topic_name (case-insensitive), or None."""
+        if not topic_name or not isinstance(topic_name, str):
+            return None
+        query = """
+            SELECT topic_id, topic_name
+            FROM TOPIC
+            WHERE LOWER(topic_name) = LOWER(%s);
+        """
+        with self._get_cursor() as cur:
+            cur.execute(query, (topic_name.strip(),))
+            return self._topic_row_to_dict(cur.fetchone())
+
+    def add_problem_topic(self, problem_id, topic_id):
+        """Link a problem to a topic in ProblemTopic join table (idempotent)."""
+        query = """
+            INSERT INTO ProblemTopic (problem_id, topic_id)
+            VALUES (%s, %s)
+            ON CONFLICT (problem_id, topic_id) DO NOTHING;
+        """
+        with self._get_cursor(commit=True) as cur:
+            cur.execute(query, (problem_id, topic_id))
+            return True
+
+    def remove_problem_topic(self, problem_id, topic_id):
+        """Remove a link in ProblemTopic join table."""
+        query = """
+            DELETE FROM ProblemTopic
+            WHERE problem_id = %s AND topic_id = %s;
+        """
+        with self._get_cursor(commit=True) as cur:
+            cur.execute(query, (problem_id, topic_id))
+            return cur.rowcount > 0
+
+    def get_topic_names_for_problem(self, problem_id):
+        """Return list of topic names associated with a problem."""
+        query = """
+            SELECT t.topic_name
+            FROM TOPIC t
+            INNER JOIN ProblemTopic pt ON t.topic_id = pt.topic_id
+            WHERE pt.problem_id = %s
+            ORDER BY t.topic_name ASC;
+        """
+        with self._get_cursor() as cur:
+            cur.execute(query, (problem_id,))
+            return [row[0] for row in cur.fetchall()]
+
+    def create_topic(self, topic_name):
+        """Insert a new topic into the TOPIC table and return the created topic dict.
+
+        Returns the new topic as {topic_id, topic_name}, or None on failure.
+        Raises ValueError if topic_name is empty or None.
+        """
+        if not topic_name or not isinstance(topic_name, str) or not topic_name.strip():
+            raise ValueError("topic_name must be a non-empty string.")
+        topic_name = topic_name.strip()
+        query = """
+            INSERT INTO TOPIC (topic_name)
+            VALUES (%s)
+            RETURNING topic_id, topic_name;
+        """
+        with self._get_cursor(commit=True) as cur:
+            cur.execute(query, (topic_name,))
+            row = cur.fetchone()
+            return self._topic_row_to_dict(row)
+

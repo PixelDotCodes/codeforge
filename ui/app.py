@@ -19,6 +19,7 @@ from services.activity_service import ActivityService
 from services.analytics_service import AnalyticsService
 from services.problem_service import ProblemService
 from services.revision_service import RevisionService
+from services.topic_service import TopicService
 from ui.styles import (
     COLOR_BG,
     COLOR_NAV_ACTIVE_BG,
@@ -77,6 +78,7 @@ class CodeForgeApp(tk.Tk):
         revision_service=None,
         activity_service=None,
         analytics_service=None,
+        topic_service=None,
     ):
         super().__init__()
 
@@ -98,6 +100,7 @@ class CodeForgeApp(tk.Tk):
         self.problem_service = problem_service or ProblemService(self.problem_repository)
         self.revision_service = revision_service or RevisionService(self.revision_repository)
         self.activity_service = activity_service or ActivityService(self.activity_repository)
+        self.topic_service = topic_service or TopicService(self.topic_repository)
         self.analytics_service = analytics_service or AnalyticsService(
             problem_repository=self.problem_repository,
             activity_repository=self.activity_repository,

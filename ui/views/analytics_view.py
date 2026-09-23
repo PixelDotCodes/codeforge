@@ -84,20 +84,22 @@ class AnalyticsView(ttk.Frame):
         )
         subtitle_label.pack(anchor="w", pady=(2, 0))
 
-        # 2. Analytics KPI cards (3 cards)
+        # 2. Analytics KPI cards (4 cards)
         kpi_frame = ttk.Frame(self, style="Content.TFrame")
         kpi_frame.grid(row=1, column=0, sticky="ew", padx=PAD_OUTER_X, pady=(0, 16))
 
-        for col_idx in range(3):
+        for col_idx in range(4):
             kpi_frame.columnconfigure(col_idx, weight=1, uniform="kpi")
 
         kpis = [
             ("Difficulty Ratio (E / M / H)", "0 / 0 / 0", "problem distribution"),
             ("Top Practiced Topic", "None", "based on solved problems"),
+            ("Top Practiced Problem", "None", "most reviewed problem"),
             ("Practice Consistency", "0%", "active days ratio"),
         ]
 
         self.kpi_labels = {}
+        self.kpi_sub_labels = {}
         for idx, (kpi_title, kpi_val, kpi_sub) in enumerate(kpis):
             card = tk.Frame(
                 kpi_frame,
@@ -107,7 +109,7 @@ class AnalyticsView(ttk.Frame):
                 padx=PAD_INNER,
                 pady=PAD_INNER,
             )
-            card.grid(row=0, column=idx, padx=(0 if idx == 0 else 10, 0), sticky="nsew")
+            card.grid(row=0, column=idx, padx=(0 if idx == 0 else 8, 0), sticky="nsew")
 
             lbl_title = tk.Label(
                 card,
@@ -118,12 +120,14 @@ class AnalyticsView(ttk.Frame):
             )
             lbl_title.pack(anchor="w")
 
+            val_font = FONT_CARD_TITLE if "Problem" in kpi_title else FONT_METRIC_VALUE
             lbl_val = tk.Label(
                 card,
                 text=kpi_val,
                 bg=COLOR_CARD_BG,
                 fg=COLOR_TEXT_PRIMARY,
-                font=FONT_METRIC_VALUE,
+                font=val_font,
+                anchor="w",
             )
             lbl_val.pack(anchor="w", pady=(4, 2))
 
@@ -137,6 +141,8 @@ class AnalyticsView(ttk.Frame):
             lbl_sub.pack(anchor="w")
 
             self.kpi_labels[kpi_title] = lbl_val
+            self.kpi_sub_labels[kpi_title] = lbl_sub
+
 
         # 3. Chart Placeholder Frames (2 side-by-side)
         charts_frame = ttk.Frame(self, style="Content.TFrame")
@@ -241,6 +247,9 @@ class AnalyticsView(ttk.Frame):
         consistency_text = "0%"
         topic_counts = {}
 
+        top_problem_text = "None"
+        top_problem_sub = "most reviewed problem"
+
         try:
             diff_counts = self.analytics_service.get_difficulty_counts()
         except Exception:
@@ -249,9 +258,25 @@ class AnalyticsView(ttk.Frame):
         try:
             top_topics = self.analytics_service.get_most_practiced_topics(limit=1)
             if top_topics:
-                top_topic = list(top_topics.keys())[0]
+                first_name, first_count = list(top_topics.items())[0]
+                top_topic = first_name if first_count > 0 else "None"
         except Exception:
             top_topic = "None"
+
+        try:
+            if hasattr(self.analytics_service, "get_top_practiced_problem"):
+                top_prob = self.analytics_service.get_top_practiced_problem()
+                if top_prob:
+                    top_problem_text = top_prob.get("title", "None")
+                    plat = top_prob.get("platform", "")
+                    qno = top_prob.get("platform_question_no", "")
+                    cnt = top_prob.get("practice_count", 0)
+                    t_str = "practice" if cnt == 1 else "practices"
+                    ref = f"{plat} #{qno}" if plat and qno else f"#{top_prob.get('problem_id')}"
+                    top_problem_sub = f"{ref} • {cnt} {t_str}"
+        except Exception:
+            top_problem_text = "None"
+            top_problem_sub = "most reviewed problem"
 
         try:
             heatmap = self.analytics_service.get_activity_heatmap_data() or {}
@@ -273,6 +298,11 @@ class AnalyticsView(ttk.Frame):
 
         if "Top Practiced Topic" in self.kpi_labels:
             self.kpi_labels["Top Practiced Topic"].configure(text=str(top_topic))
+
+        if "Top Practiced Problem" in self.kpi_labels:
+            self.kpi_labels["Top Practiced Problem"].configure(text=str(top_problem_text))
+        if "Top Practiced Problem" in self.kpi_sub_labels:
+            self.kpi_sub_labels["Top Practiced Problem"].configure(text=str(top_problem_sub))
 
         if "Practice Consistency" in self.kpi_labels:
             self.kpi_labels["Practice Consistency"].configure(text=consistency_text)
@@ -338,16 +368,20 @@ class AnalyticsView(ttk.Frame):
             self.chart2_canvas.get_tk_widget().destroy()
             self.chart2_canvas = None
 
-        if not topic_counts or not MATPLOTLIB_AVAILABLE:
+        # Filter only to topics that actually have associated problems
+        active_items = [(k, v) for k, v in topic_counts.items() if v > 0]
+
+        if not active_items or not MATPLOTLIB_AVAILABLE:
             self.chart2_placeholder.pack(fill="both", expand=True)
             return
 
         self.chart2_placeholder.pack_forget()
 
-        # Display top 5 topics
-        items = list(topic_counts.items())[:5]
+        # Display top 5 topics with associations
+        items = active_items[:5]
         topics = [k for k, _ in reversed(items)]
         counts = [v for _, v in reversed(items)]
+
 
         fig = Figure(figsize=(4, 2.8), dpi=80, facecolor="#1e293b")
         ax = fig.add_subplot(111)

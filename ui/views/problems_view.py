@@ -47,6 +47,13 @@ class ProblemsView(ttk.Frame):
             return self.app.problem_service
         return None
 
+    @property
+    def topic_service(self):
+        if self.app is not None and hasattr(self.app, "topic_service"):
+            return self.app.topic_service
+        return None
+
+
     def on_show(self):
         """Lifecycle hook invoked when this view becomes visible."""
         self.load_problems()
@@ -334,8 +341,8 @@ class ProblemsView(ttk.Frame):
         """Open a modal dialog to collect new problem input and submit via ProblemService."""
         dialog = tk.Toplevel(self)
         dialog.title("Add New Problem")
-        dialog.geometry("460x360")
-        dialog.minsize(400, 320)
+        dialog.geometry("480x440")
+        dialog.minsize(420, 380)
         dialog.configure(bg=COLOR_CARD_BG)
         dialog.transient(self)
         dialog.grab_set()
@@ -345,41 +352,87 @@ class ProblemsView(ttk.Frame):
 
         # Platform
         lbl_plat = tk.Label(form_frame, text="Platform:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
-        lbl_plat.grid(row=0, column=0, sticky="w", pady=6)
+        lbl_plat.grid(row=0, column=0, sticky="w", pady=5)
         cb_plat = ttk.Combobox(form_frame, values=["LeetCode", "Codeforces", "HackerRank"], state="readonly")
         cb_plat.set("LeetCode")
-        cb_plat.grid(row=0, column=1, sticky="ew", pady=6)
+        cb_plat.grid(row=0, column=1, sticky="ew", pady=5)
 
         # Question Number
         lbl_num = tk.Label(form_frame, text="Question #:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
-        lbl_num.grid(row=1, column=0, sticky="w", pady=6)
+        lbl_num.grid(row=1, column=0, sticky="w", pady=5)
         entry_num = ttk.Entry(form_frame)
-        entry_num.grid(row=1, column=1, sticky="ew", pady=6)
+        entry_num.grid(row=1, column=1, sticky="ew", pady=5)
 
         # Title
         lbl_title = tk.Label(form_frame, text="Title:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
-        lbl_title.grid(row=2, column=0, sticky="w", pady=6)
+        lbl_title.grid(row=2, column=0, sticky="w", pady=5)
         entry_title = ttk.Entry(form_frame)
-        entry_title.grid(row=2, column=1, sticky="ew", pady=6)
+        entry_title.grid(row=2, column=1, sticky="ew", pady=5)
 
         # Difficulty
         lbl_diff = tk.Label(form_frame, text="Difficulty:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
-        lbl_diff.grid(row=3, column=0, sticky="w", pady=6)
+        lbl_diff.grid(row=3, column=0, sticky="w", pady=5)
         cb_diff = ttk.Combobox(form_frame, values=["Easy", "Medium", "Hard"], state="readonly")
         cb_diff.set("Medium")
-        cb_diff.grid(row=3, column=1, sticky="ew", pady=6)
+        cb_diff.grid(row=3, column=1, sticky="ew", pady=5)
 
         # Problem URL
         lbl_url = tk.Label(form_frame, text="Problem URL:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
-        lbl_url.grid(row=4, column=0, sticky="w", pady=6)
+        lbl_url.grid(row=4, column=0, sticky="w", pady=5)
         entry_url = ttk.Entry(form_frame)
-        entry_url.grid(row=4, column=1, sticky="ew", pady=6)
+        entry_url.grid(row=4, column=1, sticky="ew", pady=5)
+
+        # Topics (optional multi-select from existing TOPIC records)
+        lbl_topics = tk.Label(form_frame, text="Topics:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
+        lbl_topics.grid(row=5, column=0, sticky="nw", pady=5)
+
+        topic_frame = tk.Frame(form_frame, bg=COLOR_CARD_BG)
+        topic_frame.grid(row=5, column=1, sticky="ew", pady=5)
+
+        topic_listbox = tk.Listbox(
+            topic_frame,
+            selectmode="multiple",
+            height=3,
+            bg=COLOR_BG,
+            fg=COLOR_TEXT_PRIMARY,
+            selectbackground=COLOR_PRIMARY,
+            selectforeground="#ffffff",
+            highlightthickness=1,
+            highlightbackground=COLOR_CARD_BORDER,
+            relief="flat",
+            exportselection=False,
+            font=FONT_CAPTION,
+        )
+        topic_scroll = ttk.Scrollbar(topic_frame, orient="vertical", command=topic_listbox.yview)
+        topic_listbox.configure(yscrollcommand=topic_scroll.set)
+
+        topic_listbox.pack(side="left", fill="both", expand=True)
+        topic_scroll.pack(side="right", fill="y")
+
+        available_topics = []
+        if self.topic_service:
+            available_topics = self.topic_service.get_all_topics()
+        elif self.app and hasattr(self.app, "topic_repository") and self.app.topic_repository:
+            available_topics = self.app.topic_repository.get_all_topics()
+
+        for top in available_topics:
+            tname = top.get("topic_name") if isinstance(top, dict) else str(top)
+            topic_listbox.insert(tk.END, tname)
+
+        topic_hint = tk.Label(
+            form_frame,
+            text="Optional: Click to select topic(s). Hold Ctrl to select multiple.",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT_MUTED,
+            font=FONT_CAPTION,
+        )
+        topic_hint.grid(row=6, column=1, sticky="w", pady=(0, 4))
 
         form_frame.columnconfigure(1, weight=1)
 
         # Buttons
         btn_box = tk.Frame(form_frame, bg=COLOR_CARD_BG)
-        btn_box.grid(row=5, column=0, columnspan=2, pady=(18, 0), sticky="e")
+        btn_box.grid(row=7, column=0, columnspan=2, pady=(14, 0), sticky="e")
 
         def _on_cancel():
             dialog.destroy()
@@ -420,6 +473,24 @@ class ProblemsView(ttk.Frame):
                     except Exception:
                         pass
 
+                # Save topic associations for selected existing topics
+                if new_problem:
+                    sel_indices = topic_listbox.curselection()
+                    sel_topics = [available_topics[i] for i in sel_indices if i < len(available_topics)]
+                    for st in sel_topics:
+                        tid = st.get("topic_id") if isinstance(st, dict) else None
+                        if tid is not None:
+                            if self.topic_service:
+                                try:
+                                    self.topic_service.assign_topic_to_problem(new_problem["problem_id"], tid)
+                                except Exception:
+                                    pass
+                            elif self.app and hasattr(self.app, "topic_repository") and self.app.topic_repository:
+                                try:
+                                    self.app.topic_repository.add_problem_topic(new_problem["problem_id"], tid)
+                                except Exception:
+                                    pass
+
                 dialog.destroy()
                 self.load_problems()
             except ValueError as val_err:
@@ -451,3 +522,4 @@ class ProblemsView(ttk.Frame):
             command=_on_save,
         )
         btn_save.pack(side="left")
+

@@ -90,3 +90,28 @@ CREATE TABLE IF NOT EXISTS ACTIVITY (
 INSERT INTO "USER" OVERRIDING SYSTEM VALUE
 VALUES (1)
 ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO TOPIC (topic_name) VALUES
+    ('Array'),
+    ('Hash Map'),
+    ('Two Pointers'),
+    ('Sliding Window'),
+    ('Binary Search'),
+    ('Dynamic Programming'),
+    ('Tree'),
+    ('Graph'),
+    ('Stack'),
+    ('Queue'),
+    ('Heap'),
+    ('Recursion'),
+    ('Backtracking'),
+    ('Linked List'),
+    ('Greedy'),
+    ('Math'),
+    ('Bit Manipulation'),
+    ('String'),
+    ('Trie'),
+    ('Matrix'),
+    ('Prefix Sum')
+ON CONFLICT (topic_name) DO NOTHING;
+

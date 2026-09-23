@@ -466,3 +466,141 @@ class AnalyticsService:
     def get_daily_activity_counts(self, user_id=None):
         """Alias for get_activity_heatmap_data."""
         return self.get_activity_heatmap_data(user_id=user_id)
+
+    # -------------------------------------------------------------------------
+    # Problem Practice Counts & Review Suggestions
+    # -------------------------------------------------------------------------
+
+    def get_problem_practice_counts(self):
+        """
+        Return a mapping of problem_id -> practice count.
+        Counts only relevant activity records representing problem practice/review
+        (activity_type in ('New', 'Revision')).
+        All existing problems in problem_repository are included (unpracticed problems have count 0).
+        """
+        raw_problems = self._get_raw_problems()
+        practice_counts = {
+            p["problem_id"]: 0
+            for p in raw_problems
+            if isinstance(p, dict) and "problem_id" in p
+        }
+
+        if self.activity_repository and hasattr(self.activity_repository, "get_all_activities"):
+            try:
+                activities = self.activity_repository.get_all_activities() or []
+                for act in activities:
+                    if not isinstance(act, dict):
+                        continue
+                    act_type = act.get("activity_type")
+                    if act_type in ("New", "Revision"):
+                        prob_id = act.get("problem_id")
+                        if prob_id in practice_counts:
+                            practice_counts[prob_id] += 1
+                        elif prob_id is not None:
+                            practice_counts[prob_id] = 1
+            except Exception:
+                pass
+
+        return practice_counts
+
+    def get_suggested_questions_for_review(self, limit=5):
+        """
+        Return suggested questions to review based on practice history.
+
+        Priority:
+        1. Questions practiced/saved fewer than 5 times.
+        2. After those are exhausted, questions practiced/saved fewer than 10 times.
+        3. Excluded: questions that have reached 10 or more practice records.
+
+        Returns at most `limit` questions (default 5), ordered by least-practiced first.
+        Ties are broken deterministically by problem_id ascending.
+        If no eligible questions exist, returns an empty list.
+        """
+        self._validate_limit(limit)
+        raw_problems = self._get_raw_problems()
+        if not raw_problems:
+            return []
+
+        prob_map = {
+            p["problem_id"]: p
+            for p in raw_problems
+            if isinstance(p, dict) and "problem_id" in p
+        }
+        counts = self.get_problem_practice_counts()
+
+        group_lt_5 = []
+        group_lt_10 = []
+
+        for pid, prob in prob_map.items():
+            cnt = counts.get(pid, 0)
+            if cnt < 5:
+                group_lt_5.append((cnt, pid, prob))
+            elif cnt < 10:
+                group_lt_10.append((cnt, pid, prob))
+            # cnt >= 10 are completely excluded
+
+        # Prefer least-practiced first; ties broken deterministically by problem_id
+        group_lt_5.sort(key=lambda x: (x[0], x[1]))
+        group_lt_10.sort(key=lambda x: (x[0], x[1]))
+
+        candidates = group_lt_5 + group_lt_10
+        selected = candidates[:limit]
+
+        result = []
+        for cnt, pid, prob in selected:
+            result.append({
+                "problem_id": pid,
+                "title": prob.get("title", ""),
+                "platform": prob.get("platform", ""),
+                "platform_question_no": prob.get("platform_question_no") or prob.get("question_number", ""),
+                "difficulty": prob.get("difficulty", ""),
+                "problem_url": prob.get("problem_url", ""),
+                "practice_count": cnt,
+            })
+        return result
+
+    def get_top_practiced_problem(self):
+        """
+        Return the most-practiced problem based on actual activity records.
+        Returns a dict with problem details and practice_count, or None if no practice data.
+        """
+        counts = self.get_problem_practice_counts()
+        if not counts:
+            return None
+
+        # Filter to problems with at least 1 practice record
+        practiced = [(pid, cnt) for pid, cnt in counts.items() if cnt > 0]
+        if not practiced:
+            return None
+
+        # Sort by count descending, then problem_id ascending for deterministic tie-breaking
+        practiced.sort(key=lambda x: (-x[1], x[0]))
+        top_pid, top_count = practiced[0]
+
+        # Retrieve problem details
+        raw_problems = self._get_raw_problems()
+        prob_map = {
+            p["problem_id"]: p
+            for p in raw_problems
+            if isinstance(p, dict) and "problem_id" in p
+        }
+        prob = prob_map.get(top_pid)
+        if not prob and self.problem_repository and hasattr(self.problem_repository, "get_problem_by_id"):
+            try:
+                prob = self.problem_repository.get_problem_by_id(top_pid)
+            except Exception:
+                prob = None
+
+        if not prob:
+            return None
+
+        return {
+            "problem_id": top_pid,
+            "title": prob.get("title", ""),
+            "platform": prob.get("platform", ""),
+            "platform_question_no": prob.get("platform_question_no") or prob.get("question_number", ""),
+            "difficulty": prob.get("difficulty", ""),
+            "problem_url": prob.get("problem_url", ""),
+            "practice_count": top_count,
+        }
+
