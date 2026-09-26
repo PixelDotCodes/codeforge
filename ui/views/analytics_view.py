@@ -278,12 +278,15 @@ class AnalyticsView(ttk.Frame):
             top_problem_text = "None"
             top_problem_sub = "most reviewed problem"
 
+        consistency_text = "0%"
+        consistency_sub = "active days ratio"
         try:
-            heatmap = self.analytics_service.get_activity_heatmap_data() or {}
-            active_days = len(heatmap)
-            consistency_text = f"{min(100, int(active_days / 30 * 100))}%"
+            consistency = self.analytics_service.get_practice_consistency()
+            consistency_text = consistency.get("formatted_percentage", "0%")
+            consistency_sub = consistency.get("display_text", "active days ratio")
         except Exception:
             consistency_text = "0%"
+            consistency_sub = "active days ratio"
 
         try:
             topic_counts = self.analytics_service.get_topic_problem_counts() or {}
@@ -306,6 +309,8 @@ class AnalyticsView(ttk.Frame):
 
         if "Practice Consistency" in self.kpi_labels:
             self.kpi_labels["Practice Consistency"].configure(text=consistency_text)
+        if "Practice Consistency" in self.kpi_sub_labels:
+            self.kpi_sub_labels["Practice Consistency"].configure(text=consistency_sub)
 
         # Update Chart 1: Difficulty Distribution
         self._render_difficulty_chart(diff_counts)

@@ -427,14 +427,27 @@ class DashboardView(ttk.Frame):
         self._cell_map.clear()
 
         today = date.today()
-        # LeetCode grid: 7 rows (Sunday to Saturday) across 52 weeks
-        days_since_sunday = (today.weekday() + 1) % 7
-        this_sunday = today - timedelta(days=days_since_sunday)
-        start_sunday = this_sunday - timedelta(weeks=51)
+        # Display 12 calendar months ending in current month
+        months = []
+        for i in range(11, -1, -1):
+            m = today.month - i
+            y = today.year
+            while m <= 0:
+                m += 12
+                y -= 1
+            months.append((y, m))
+
+        def get_days_in_month(year, month):
+            if month == 2:
+                return 28
+            if month in (4, 6, 9, 11):
+                return 30
+            return 31
 
         cell_size = 10
         gap = 3
         step = cell_size + gap
+        month_gap = 6
         margin_left = 32
         margin_top = 20
 
@@ -451,33 +464,37 @@ class DashboardView(ttk.Frame):
                 anchor="e",
             )
 
-        last_month = None
+        current_x = margin_left
 
-        for col in range(52):
-            for row in range(7):
-                day_offset = col * 7 + row
-                curr_d = start_sunday + timedelta(days=day_offset)
-                x1 = margin_left + col * step
-                y1 = margin_top + row * step
-                x2 = x1 + cell_size
-                y2 = y1 + cell_size
+        for year, month in months:
+            month_name = date(year, month, 1).strftime("%b")
+            num_days = get_days_in_month(year, month)
 
-                # Month label along the top
-                if row == 0:
-                    curr_month = curr_d.strftime("%b")
-                    if curr_month != last_month and col < 51:
-                        self.heatmap_canvas.create_text(
-                            x1,
-                            8,
-                            text=curr_month,
-                            fill="#64748b",
-                            font=("Segoe UI", 8),
-                            anchor="w",
-                        )
-                        last_month = curr_month
+            # Month label along the top above the month's start
+            self.heatmap_canvas.create_text(
+                current_x,
+                8,
+                text=month_name,
+                fill="#64748b",
+                font=("Segoe UI", 8),
+                anchor="w",
+            )
+
+            month_col = 0
+            for day in range(1, num_days + 1):
+                curr_d = date(year, month, day)
+                row = (curr_d.weekday() + 1) % 7
+
+                if day > 1 and row == 0:
+                    month_col += 1
 
                 if curr_d > today:
                     continue
+
+                x1 = current_x + month_col * step
+                y1 = margin_top + row * step
+                x2 = x1 + cell_size
+                y2 = y1 + cell_size
 
                 cnt = heatmap_data.get(curr_d, 0)
                 if cnt == 0:
@@ -503,6 +520,9 @@ class DashboardView(ttk.Frame):
                     tags=("cell",),
                 )
                 self._cell_map[rect_id] = (curr_d, cnt)
+
+            # Advance current_x with month_gap after month's week columns
+            current_x += (month_col + 1) * step + month_gap
 
     def _on_heatmap_motion(self, event):
         """Display tooltip/details for hovered heatmap cell."""

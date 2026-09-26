@@ -467,6 +467,33 @@ class AnalyticsService:
         """Alias for get_activity_heatmap_data."""
         return self.get_activity_heatmap_data(user_id=user_id)
 
+    def get_practice_consistency(self, user_id=None, as_of_date=None):
+        """
+        Calculate practice consistency for the current month:
+        distinct active practice days in the current month / current day-of-month * 100.
+        """
+        today = as_of_date or date.today()
+        current_year = today.year
+        current_month = today.month
+        current_day = today.day
+
+        heatmap_data = self.get_activity_heatmap_data(user_id=user_id) or {}
+        active_days = sum(
+            1 for d in heatmap_data.keys()
+            if d.year == current_year and d.month == current_month
+        )
+
+        denominator = current_day
+        percentage = (active_days / denominator * 100.0) if denominator > 0 else 0.0
+
+        return {
+            "active_days": active_days,
+            "denominator": denominator,
+            "percentage": percentage,
+            "formatted_percentage": f"{round(percentage)}%",
+            "display_text": f"{active_days} of {denominator} days active",
+        }
+
     # -------------------------------------------------------------------------
     # Problem Practice Counts & Review Suggestions
     # -------------------------------------------------------------------------
