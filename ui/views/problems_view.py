@@ -19,7 +19,6 @@ from ui.styles import (
     COLOR_TEXT_SECONDARY,
     FONT_BODY,
     FONT_BODY_BOLD,
-    FONT_CAPTION,
     PAD_INNER,
     PAD_OUTER_X,
     PAD_OUTER_Y,

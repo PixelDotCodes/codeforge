@@ -29,7 +29,6 @@ from ui.styles import (
     COLOR_SIDEBAR_MUTED,
     COLOR_SIDEBAR_SEP,
     COLOR_SIDEBAR_TEXT,
-    FONT_BODY,
     FONT_CAPTION,
     FONT_NAV,
     FONT_SECTION,

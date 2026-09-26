@@ -5,7 +5,6 @@ Provides color palette constants, font definitions, dimensions,
 and TTK style configuration for dark theme desktop appearance.
 """
 
-import tkinter.font as tkfont
 from tkinter import ttk
 
 # --- Dark Theme Color Palette ---
