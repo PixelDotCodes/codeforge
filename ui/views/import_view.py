@@ -196,7 +196,7 @@ class ImportView(ttk.Frame):
 
         guide_content = (
             "Fields for CSV / JSON import:\n\n"
-            "• platform: e.g. 'LeetCode', 'Codeforces'\n"
+            "• platform: e.g. 'LeetCode', 'GeeksForGeeks'\n"
             "• question_number: Positive integer (e.g. 1, 42)\n"
             "• title: Problem title string\n"
             "• difficulty: 'Easy', 'Medium', or 'Hard'\n"

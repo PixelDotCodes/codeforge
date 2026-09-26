@@ -152,7 +152,7 @@ class ProblemsView(ttk.Frame):
 
         self.platform_cb = ttk.Combobox(
             filter_card,
-            values=["All Platforms", "LeetCode", "Codeforces", "HackerRank"],
+            values=["All Platforms", "GeeksForGeeks", "LeetCode"],
             state="readonly",
             width=14,
         )
@@ -353,7 +353,7 @@ class ProblemsView(ttk.Frame):
         # Platform
         lbl_plat = tk.Label(form_frame, text="Platform:", bg=COLOR_CARD_BG, fg=COLOR_TEXT_PRIMARY, font=FONT_BODY)
         lbl_plat.grid(row=0, column=0, sticky="w", pady=5)
-        cb_plat = ttk.Combobox(form_frame, values=["LeetCode", "Codeforces", "HackerRank"], state="readonly")
+        cb_plat = ttk.Combobox(form_frame, values=["GeeksForGeeks", "LeetCode"], state="readonly")
         cb_plat.set("LeetCode")
         cb_plat.grid(row=0, column=1, sticky="ew", pady=5)
 
