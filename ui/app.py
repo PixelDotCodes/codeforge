@@ -3,7 +3,7 @@ CodeForge Main Application Window
 
 Manages the top-level Tkinter window, persistent navigation sidebar,
 and dynamic view switching between Dashboard, Problems, Revision,
-Analytics, and Import screens.
+and Analytics screens.
 """
 
 import tkinter as tk
@@ -43,7 +43,6 @@ from ui.styles import (
 from ui.views import (
     AnalyticsView,
     DashboardView,
-    ImportView,
     ProblemsView,
     RevisionView,
 )
@@ -57,7 +56,6 @@ class CodeForgeApp(tk.Tk):
         ("Problems", "📝  Problems"),
         ("Revision", "🔄  Revision"),
         ("Analytics", "📈  Analytics"),
-        ("Import", "📥  Import"),
     ]
 
     VIEW_CLASSES = {
@@ -65,7 +63,6 @@ class CodeForgeApp(tk.Tk):
         "Problems": ProblemsView,
         "Revision": RevisionView,
         "Analytics": AnalyticsView,
-        "Import": ImportView,
     }
 
     def __init__(
