@@ -1,8 +1,8 @@
 """
 Analytics View
 
-Provides visualization for problem difficulty breakdown,
-topic distributions, and activity trends.
+Provides visualization for problem difficulty breakdown
+and activity trends.
 Connects Tkinter UI -> AnalyticsService -> Repositories.
 """
 
@@ -19,10 +19,8 @@ except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
 from ui.styles import (
-    COLOR_BG,
     COLOR_CARD_BG,
     COLOR_CARD_BORDER,
-    COLOR_PRIMARY,
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     COLOR_TEXT_SECONDARY,
@@ -47,7 +45,6 @@ class AnalyticsView(ttk.Frame):
         self.app = app
         self._analytics_service = analytics_service
         self.chart1_canvas = None
-        self.chart2_canvas = None
         self._build_ui()
 
     @property
@@ -79,7 +76,7 @@ class AnalyticsView(ttk.Frame):
 
         subtitle_label = ttk.Label(
             header_frame,
-            text="Visualize problem difficulty distribution, topic coverage, and practice trends.",
+            text="Visualize problem difficulty distribution and practice trends.",
             style="HeaderSubtitle.TLabel",
         )
         subtitle_label.pack(anchor="w", pady=(2, 0))
@@ -144,11 +141,10 @@ class AnalyticsView(ttk.Frame):
             self.kpi_sub_labels[kpi_title] = lbl_sub
 
 
-        # 3. Chart Placeholder Frames (2 side-by-side)
+        # 3. Chart Placeholder Frame
         charts_frame = ttk.Frame(self, style="Content.TFrame")
         charts_frame.grid(row=2, column=0, sticky="nsew", padx=PAD_OUTER_X, pady=(0, 16))
-        charts_frame.columnconfigure(0, weight=1, uniform="charts")
-        charts_frame.columnconfigure(1, weight=1, uniform="charts")
+        charts_frame.columnconfigure(0, weight=1)
         charts_frame.rowconfigure(0, weight=1)
 
         # Chart 1: Difficulty Breakdown
@@ -160,7 +156,7 @@ class AnalyticsView(ttk.Frame):
             padx=PAD_INNER,
             pady=PAD_INNER,
         )
-        self.chart1_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self.chart1_card.grid(row=0, column=0, sticky="nsew")
 
         chart1_title = tk.Label(
             self.chart1_card,
@@ -183,39 +179,6 @@ class AnalyticsView(ttk.Frame):
             justify="center",
         )
         self.chart1_placeholder.pack(fill="both", expand=True)
-
-        # Chart 2: Topic Breakdown
-        self.chart2_card = tk.Frame(
-            charts_frame,
-            bg=COLOR_CARD_BG,
-            highlightbackground=COLOR_CARD_BORDER,
-            highlightthickness=1,
-            padx=PAD_INNER,
-            pady=PAD_INNER,
-        )
-        self.chart2_card.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
-
-        chart2_title = tk.Label(
-            self.chart2_card,
-            text="Topic Coverage",
-            bg=COLOR_CARD_BG,
-            fg=COLOR_TEXT_PRIMARY,
-            font=FONT_CARD_TITLE,
-        )
-        chart2_title.pack(anchor="w", pady=(0, 4))
-
-        self.chart2_container = tk.Frame(self.chart2_card, bg=COLOR_CARD_BG)
-        self.chart2_container.pack(fill="both", expand=True)
-
-        self.chart2_placeholder = tk.Label(
-            self.chart2_container,
-            text="📈 No topic practice data to display.\nTopic coverage will appear as problems are solved.",
-            bg=COLOR_CARD_BG,
-            fg=COLOR_TEXT_MUTED,
-            font=FONT_BODY,
-            justify="center",
-        )
-        self.chart2_placeholder.pack(fill="both", expand=True)
 
         # 4. Footer Note
         footer_card = tk.Frame(
@@ -245,7 +208,6 @@ class AnalyticsView(ttk.Frame):
         diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
         top_topic = "None"
         consistency_text = "0%"
-        topic_counts = {}
 
         top_problem_text = "None"
         top_problem_sub = "most reviewed problem"
@@ -288,11 +250,6 @@ class AnalyticsView(ttk.Frame):
             consistency_text = "0%"
             consistency_sub = "active days ratio"
 
-        try:
-            topic_counts = self.analytics_service.get_topic_problem_counts() or {}
-        except Exception:
-            topic_counts = {}
-
         # Update KPI labels
         if "Difficulty Ratio (E / M / H)" in self.kpi_labels:
             self.kpi_labels["Difficulty Ratio (E / M / H)"].configure(
@@ -314,9 +271,6 @@ class AnalyticsView(ttk.Frame):
 
         # Update Chart 1: Difficulty Distribution
         self._render_difficulty_chart(diff_counts)
-
-        # Update Chart 2: Topic Coverage
-        self._render_topic_chart(topic_counts)
 
     def _render_difficulty_chart(self, diff_counts):
         """Render bar chart of difficulty distribution via Matplotlib or fallback."""
@@ -366,54 +320,3 @@ class AnalyticsView(ttk.Frame):
         self.chart1_canvas = FigureCanvasTkAgg(fig, master=self.chart1_container)
         self.chart1_canvas.draw()
         self.chart1_canvas.get_tk_widget().pack(fill="both", expand=True)
-
-    def _render_topic_chart(self, topic_counts):
-        """Render horizontal bar chart of topic coverage via Matplotlib or fallback."""
-        if self.chart2_canvas:
-            self.chart2_canvas.get_tk_widget().destroy()
-            self.chart2_canvas = None
-
-        # Filter only to topics that actually have associated problems
-        active_items = [(k, v) for k, v in topic_counts.items() if v > 0]
-
-        if not active_items or not MATPLOTLIB_AVAILABLE:
-            self.chart2_placeholder.pack(fill="both", expand=True)
-            return
-
-        self.chart2_placeholder.pack_forget()
-
-        # Display top 5 topics with associations
-        items = active_items[:5]
-        topics = [k for k, _ in reversed(items)]
-        counts = [v for _, v in reversed(items)]
-
-
-        fig = Figure(figsize=(4, 2.8), dpi=80, facecolor="#1e293b")
-        ax = fig.add_subplot(111)
-        ax.set_facecolor("#1e293b")
-
-        bars = ax.barh(topics, counts, color="#3b82f6", height=0.55)
-        ax.tick_params(colors="#94a3b8", labelsize=9)
-        ax.spines["bottom"].set_color("#334155")
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.spines["left"].set_color("#334155")
-
-        for bar in bars:
-            width = bar.get_width()
-            ax.annotate(
-                f"{int(width)}",
-                xy=(width, bar.get_y() + bar.get_height() / 2),
-                xytext=(4, 0),
-                textcoords="offset points",
-                ha="left",
-                va="center",
-                color="#e2e8f0",
-                fontsize=9,
-            )
-
-        fig.tight_layout()
-
-        self.chart2_canvas = FigureCanvasTkAgg(fig, master=self.chart2_container)
-        self.chart2_canvas.draw()
-        self.chart2_canvas.get_tk_widget().pack(fill="both", expand=True)
