@@ -1,9 +1,6 @@
 .venv/
 __pycache__/
+.pytest_cache/
 *.pyc
 .env
 *.bkp
-test/
-test_import.csv
-smoke_test.py
-verify.sql

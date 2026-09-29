@@ -1,10 +1,10 @@
 # CodeForge
 
-> **A coding practice and contest tracker built to make progress measurable.**
+> **A coding practice and revision tracker built to make progress measurable.**
 
-CodeForge is a desktop application for tracking coding problems, revision, contests, goals, activity, and performance analytics in one place.
+CodeForge is a desktop application for tracking coding problems, revisions, activity, and performance analytics in one place.
 
-Instead of keeping coding progress scattered across different platforms and notes, CodeForge brings the important data together and turns it into useful insights.
+It provides a simple way to record solved problems, review practice history, and visualize progress without relying on scattered notes or spreadsheets.
 
 ---
 
@@ -12,94 +12,166 @@ Instead of keeping coding progress scattered across different platforms and note
 
 ### Problem Tracking
 
-* Track solved coding problems
-* Record difficulty and topic
-* Maintain problem-solving history
-* Track progress over time
+* Add and manage coding problems
+* Support for LeetCode and GeeksForGeeks
+* Record question number, title, difficulty, and problem URL
+* Search and filter problems by platform and difficulty
 
-### Revision
+### Revision Tracking
 
-* Keep track of problems that need revision
-* Organize revision based on previous activity
-* Monitor revision progress
+* Log revisions for existing problems
+* Record revision date and revision type
+* View revision history
+* Maintain a simple review workflow based on practice history
 
-### Goals & Streaks
+### Activity Tracking
 
-* Set coding goals
-* Monitor progress toward goals
-* Track coding activity and streaks
+* Automatically record problem practice activity
+* Distinguish between new practice and revision activity
+* Track activity over time
+* View recent activity on the dashboard
+
+### Dashboard
+
+* Problem-solving statistics
+* LeetCode-style activity heatmap
+* Current practice streak
+* Active-day count
+* Suggested questions for review
+* Top practiced problem
 
 ### Analytics
 
-* Analyze problem-solving progress
-* View topic and difficulty statistics
-* Visualize activity and progress through charts
+* Difficulty distribution
+* Practice consistency
+* Activity-based statistics
+* Visual charts powered by Matplotlib
 
 ---
 
 ## Architecture
 
-CodeForge follows a layered architecture to keep the user interface, application logic, and database operations separate.
+CodeForge follows a layered architecture:
 
-The application is designed so that:
+```text
+Tkinter UI
+    ↓
+Service / Business Logic
+    ↓
+Repository / Data Access Layer
+    ↓
+PostgreSQL
+```
 
-* **Frontend** handles user interaction.
-* **Business Logic** determines what the application should do.
-* **Repository / Data Access Layer** handles database operations.
-* **PostgreSQL** stores the application data.
+Each layer has a specific responsibility:
+
+* **UI** handles user interaction and presentation.
+* **Services** handle validation and business logic.
+* **Repositories** handle PostgreSQL queries and data access.
+* **PostgreSQL** stores persistent application data.
 
 ---
 
 ## Tech Stack
 
-| Technology   | Purpose                 |
-| ------------ | ----------------------- |
-| Python       | Application development |
-| Tkinter      | Desktop GUI             |
-| PostgreSQL   | Database                |
-| Matplotlib   | Data visualization      |
-| Git & GitHub | Version control         |
+| Technology      | Purpose                 |
+| --------------- | ----------------------- |
+| Python          | Application development |
+| Tkinter         | Desktop GUI             |
+| PostgreSQL      | Database                |
+| psycopg2-binary | PostgreSQL connectivity |
+| Matplotlib      | Data visualization      |
+| Git & GitHub    | Version control         |
 
 ---
 
-> The project structure will evolve as development progresses.
+## Project Structure
+
+```text
+codeforge/
+├── database/
+│   ├── __init__.py
+│   ├── connection.py
+│   └── schema.sql
+├── repositories/
+├── services/
+├── ui/
+│   └── views/
+├── docs/
+├── main.py
+├── requirements.txt
+└── README.md
+```
 
 ---
-
 
 ## Getting Started
 
-Clone the repository:
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/PixelDotCodes/codeforge.git
+cd codeforge
 ```
 
-Create a virtual environment:
+### 2. Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it on Windows:
+### 3. Activate the environment on Windows
 
 ```powershell
 .venv\Scripts\activate
 ```
 
-Install the project dependencies:
+### 4. Install dependencies
 
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-The application is currently under development.
+### 5. Configure PostgreSQL
+
+Create a PostgreSQL database named `codeforge`.
+
+Run:
+
+```text
+database/schema.sql
+```
+
+using pgAdmin Query Tool or `psql`.
+
+CodeForge expects the following PostgreSQL connection settings:
+
+```text
+Host: localhost
+Port: 5432
+Database: codeforge
+User: postgres
+```
+
+The database password is read from the `DB_PASSWORD` environment variable.
+
+For the current PowerShell session:
+
+```powershell
+$env:DB_PASSWORD="your_password"
+```
+
+### 6. Run CodeForge
+
+```powershell
+python main.py
+```
 
 ---
 
 ## Project Goal
 
-CodeForge aims to provide a structured way to understand and improve coding practice by combining **problem tracking, revision, contest activity, goals, and analytics** into a single application.
+CodeForge is designed to make coding practice more structured by combining problem tracking, revision history, activity tracking, and analytics into a single desktop application.
 
 ---
 
