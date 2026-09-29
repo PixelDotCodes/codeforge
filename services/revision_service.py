@@ -1,30 +1,10 @@
-"""
-Revision Service
-
-This module handles the business logic related to problem revisions.
-It validates revision data, enforces business rules, and coordinates
-with the Revision Repository for persistence.
-
-The service layer acts as a bridge between the GUI and the repository,
-so the GUI does not directly interact with the database.
-"""
+"""Business logic and validation for problem revisions."""
 
 from datetime import date, datetime
 
 
 class RevisionService:
-    """
-    Business logic layer for Revision operations.
-
-    Expected RevisionRepository interface:
-        - problem_exists(problem_id) -> bool
-        - add_revision(problem_id, revision_date, revision_type) -> dict
-        - get_revision_by_id(revision_id) -> dict | None
-        - get_revisions_by_problem_id(problem_id) -> list[dict]
-        - get_all_revisions() -> list[dict]
-        - update_revision(revision_id, revision_date=None, revision_type=None) -> dict | None
-        - delete_revision(revision_id) -> bool
-    """
+    """Business logic for Revision operations."""
 
     def __init__(self, revision_repository):
         self.revision_repository = revision_repository

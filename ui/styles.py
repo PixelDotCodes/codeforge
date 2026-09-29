@@ -29,9 +29,7 @@ COLOR_PRIMARY_HOVER = "#1d4ed8"   # Primary blue hover (blue-700)
 COLOR_PRIMARY_TEXT = "#ffffff"
 
 COLOR_ACCENT = "#38bdf8"          # Sky blue accent
-COLOR_SUCCESS = "#22c55e"         # Green
-COLOR_WARNING = "#f59e0b"         # Amber
-COLOR_DANGER = "#ef4444"          # Red
+
 
 # --- Window Dimensions ---
 WINDOW_TITLE = "CodeForge - Practice & Contest Tracker"

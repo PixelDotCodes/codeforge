@@ -4,13 +4,6 @@ Activity Repository
 Handles data access and SQL operations for the ACTIVITY table in PostgreSQL.
 Responsible for executing parameterized queries and mapping database rows
 to simple Python dictionaries.
-
-ERD-confirmed schema for ACTIVITY:
-    activity_id   INTEGER  PRIMARY KEY
-    user_id       INTEGER  NOT NULL  REFERENCES USER(User_id)
-    problem_id    INTEGER  NOT NULL  REFERENCES PROBLEMS(problem_id)
-    activity_date DATE     NOT NULL
-    activity_type VARCHAR  NOT NULL   -- 'New' or 'Revision'
 """
 
 from contextlib import contextmanager
@@ -23,7 +16,6 @@ class ActivityRepository:
     """
 
     def __init__(self, connection_provider=None):
-        # Allows injection of a custom connection (e.g., a mock) for testing.
         self.connection_provider = connection_provider or get_connection
 
     def _get_connection(self):
@@ -66,12 +58,8 @@ class ActivityRepository:
             "activity_type": row[4],
         }
 
-    # ------------------------------------------------------------------
-    # Read operations
-    # ------------------------------------------------------------------
 
     def has_activity_for_problem(self, user_id, problem_id):
-        """Return True if any ACTIVITY row exists for the given user and problem."""
         query = """
             SELECT 1
             FROM ACTIVITY
@@ -83,7 +71,6 @@ class ActivityRepository:
             return cur.fetchone() is not None
 
     def get_activity_by_id(self, activity_id):
-        """Return a single activity dict by primary key, or None if not found."""
         query = """
             SELECT activity_id, user_id, problem_id, activity_date, activity_type
             FROM ACTIVITY
@@ -94,7 +81,6 @@ class ActivityRepository:
             return self._row_to_dict(cur.fetchone())
 
     def get_activities_by_user_id(self, user_id):
-        """Return all ACTIVITY rows for a given user, ordered by date then id."""
         query = """
             SELECT activity_id, user_id, problem_id, activity_date, activity_type
             FROM ACTIVITY
@@ -106,7 +92,6 @@ class ActivityRepository:
             return [self._row_to_dict(r) for r in cur.fetchall()]
 
     def get_activities_by_problem_id(self, problem_id):
-        """Return all ACTIVITY rows for a given problem, ordered by date then id."""
         query = """
             SELECT activity_id, user_id, problem_id, activity_date, activity_type
             FROM ACTIVITY
@@ -118,7 +103,6 @@ class ActivityRepository:
             return [self._row_to_dict(r) for r in cur.fetchall()]
 
     def get_all_activities(self):
-        """Return all ACTIVITY rows ordered by activity_id."""
         query = """
             SELECT activity_id, user_id, problem_id, activity_date, activity_type
             FROM ACTIVITY
@@ -128,12 +112,8 @@ class ActivityRepository:
             cur.execute(query)
             return [self._row_to_dict(r) for r in cur.fetchall()]
 
-    # ------------------------------------------------------------------
-    # Write operations
-    # ------------------------------------------------------------------
 
     def add_activity(self, user_id, problem_id, activity_date, activity_type):
-        """Insert a new ACTIVITY row and return it as a dict."""
         query = """
             INSERT INTO ACTIVITY (user_id, problem_id, activity_date, activity_type)
             VALUES (%s, %s, %s, %s)
@@ -144,7 +124,6 @@ class ActivityRepository:
             return self._row_to_dict(cur.fetchone())
 
     def delete_activity(self, activity_id):
-        """Delete an ACTIVITY row by primary key. Returns True if a row was deleted."""
         query = """
             DELETE FROM ACTIVITY
             WHERE activity_id = %s;

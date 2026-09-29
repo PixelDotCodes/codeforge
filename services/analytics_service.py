@@ -2,15 +2,7 @@
 Analytics Service
 
 This module handles the business and aggregation logic for analytics and statistics
-in CodeForge. It aggregates raw data from the problem, topic, and activity
-repositories into clean, graph/report-ready Python data structures.
-
-The service layer acts as a bridge between repositories and visualization/GUI layers:
-- Business and aggregation logic only.
-- No SQL or direct PostgreSQL access.
-- No Tkinter or GUI logic.
-- No Matplotlib or chart rendering.
-- No direct database connection handling.
+in CodeForge. It aggregates raw data from the problem, topic, and activity.
 """
 
 from collections import defaultdict
@@ -18,54 +10,13 @@ from datetime import date, datetime
 
 
 class AnalyticsService:
-    """
-    Business logic layer for analytics and reporting operations.
-
-    Expected Repository Interfaces:
-
-    ProblemRepository:
-        - get_all_problems() -> list[dict]
-          Returns list of problem dicts, each typically containing:
-          {
-              "problem_id": int,
-              "platform": str,
-              "question_number": int,
-              "title": str,
-              "difficulty": str,  # "Easy", "Medium", "Hard"
-              "problem_url": str
-          }
-
-    TopicRepository:
-        - get_all_topics() -> list[dict]
-          Returns list of topic dicts:
-          [{"topic_id": int, "topic_name": str}, ...]
-        - get_all_problem_topics() -> list[dict]
-          Returns list of join records (PROBLEMS <-> ProblemTopic <-> TOPIC):
-          [{"problem_id": int, "topic_id": int}, ...]
-
-    ActivityRepository:
-        - get_all_activities() -> list[dict]
-          Returns list of activity dicts:
-          [
-              {
-                  "activity_id": int,
-                  "user_id": int,
-                  "problem_id": int,
-                  "activity_date": date | str | datetime,
-                  "activity_type": str  # "New" | "Revision"
-              }, ...
-          ]
-        - get_activities_by_user_id(user_id: int) -> list[dict]
-    """
-
     def __init__(
         self,
         problem_repository=None,
         activity_repository=None,
         topic_repository=None,
     ):
-        # Flexible positional arg handling:
-        # Detect if caller passed (problem_repo, topic_repo, activity_repo)
+
         if (
             activity_repository is not None
             and hasattr(activity_repository, "get_all_topics")
@@ -80,9 +31,6 @@ class AnalyticsService:
         self.activity_repository = activity_repository
         self.topic_repository = topic_repository
 
-    # -------------------------------------------------------------------------
-    # Validation helpers
-    # -------------------------------------------------------------------------
 
     def _validate_positive_int(self, value, field_name):
         if value is None:
@@ -125,9 +73,6 @@ class AnalyticsService:
 
         return None
 
-    # -------------------------------------------------------------------------
-    # Problem Statistics
-    # -------------------------------------------------------------------------
 
     def _get_raw_problems(self):
         if not self.problem_repository:
@@ -147,14 +92,9 @@ class AnalyticsService:
         return len(self._get_raw_problems())
 
     def get_total_problems(self):
-        """Alias for get_total_solved_count."""
         return self.get_total_solved_count()
 
     def get_difficulty_counts(self):
-        """
-        Return the count of solved problems grouped by difficulty.
-        Always returns a dictionary with 'Easy', 'Medium', 'Hard' keys.
-        """
         counts = {"Easy": 0, "Medium": 0, "Hard": 0}
         for problem in self._get_raw_problems():
             if not isinstance(problem, dict):
@@ -179,10 +119,6 @@ class AnalyticsService:
         return self.get_difficulty_counts()["Hard"]
 
     def get_platform_counts(self):
-        """
-        Return problem counts grouped by platform.
-        Example: {"LeetCode": 12, "Codeforces": 5}
-        """
         counts = defaultdict(int)
         for problem in self._get_raw_problems():
             if not isinstance(problem, dict):
@@ -195,14 +131,6 @@ class AnalyticsService:
         return dict(counts)
 
     def get_difficulty_counts_by_platform(self):
-        """
-        Return difficulty counts grouped by platform where supported by repository data.
-        Example:
-        {
-            "LeetCode": {"Easy": 6, "Medium": 4, "Hard": 2},
-            "Codeforces": {"Easy": 1, "Medium": 2, "Hard": 1}
-        }
-        """
         result = {}
         for problem in self._get_raw_problems():
             if not isinstance(problem, dict):
@@ -230,9 +158,6 @@ class AnalyticsService:
         return self.get_difficulty_counts_by_platform()
 
     def get_problem_statistics(self):
-        """
-        Return a consolidated dictionary of all problem statistics.
-        """
         diff_counts = self.get_difficulty_counts()
         return {
             "total_solved": self.get_total_solved_count(),
@@ -243,10 +168,6 @@ class AnalyticsService:
             "platform_counts": self.get_platform_counts(),
             "platform_difficulty_counts": self.get_difficulty_counts_by_platform(),
         }
-
-    # -------------------------------------------------------------------------
-    # Topic / Pattern Statistics
-    # -------------------------------------------------------------------------
 
     def _get_raw_topics(self):
         repo = self.topic_repository or self.problem_repository
@@ -296,8 +217,6 @@ class AnalyticsService:
 
         id_to_name = {}
         topic_problems = defaultdict(set)
-
-        # Register existing topics from TOPIC table
         for item in raw_topics:
             if not isinstance(item, dict):
                 continue
@@ -311,7 +230,6 @@ class AnalyticsService:
                     if topic_name not in topic_problems:
                         topic_problems[topic_name] = set()
 
-        # Map ProblemTopic join records to topics
         for pt in raw_problem_topics:
             if not isinstance(pt, dict):
                 continue
@@ -327,8 +245,6 @@ class AnalyticsService:
 
             if resolved_name and prob_id is not None:
                 topic_problems[resolved_name].add(prob_id)
-
-        # Fallback: if no dedicated join table records exist, inspect problem dicts
         if not topic_problems:
             for prob in self._get_raw_problems():
                 if not isinstance(prob, dict):
@@ -342,7 +258,6 @@ class AnalyticsService:
                             if t and prob_id is not None:
                                 topic_problems[t].add(prob_id)
 
-        # Sort by count descending, ties broken alphabetically
         sorted_topics = sorted(
             topic_problems.keys(),
             key=lambda name: (-len(topic_problems[name]), name)
@@ -351,15 +266,9 @@ class AnalyticsService:
         return {name: len(topic_problems[name]) for name in sorted_topics}
 
     def get_topic_counts(self):
-        """Alias for get_topic_problem_counts."""
         return self.get_topic_problem_counts()
 
     def get_most_practiced_topics(self, limit=None):
-        """
-        Return the most practiced topics and their problem counts.
-        Ties are broken deterministically by topic name in alphabetical order.
-        If limit is specified, returns at most limit items.
-        """
         self._validate_limit(limit)
         all_counts = self.get_topic_problem_counts()
         if limit is not None:
@@ -367,25 +276,14 @@ class AnalyticsService:
         return dict(all_counts)
 
     def get_least_practiced_topics(self, limit=None):
-        """
-        Return the least practiced topics and their problem counts.
-        Ties are broken deterministically by topic name in alphabetical order.
-        If limit is specified, returns at most limit items.
-        """
         self._validate_limit(limit)
         all_counts = self.get_topic_problem_counts()
         if not all_counts:
             return {}
-
-        # Sort by count ascending, then topic name ascending
         sorted_items = sorted(all_counts.items(), key=lambda item: (item[1], item[0]))
         if limit is not None:
             sorted_items = sorted_items[:limit]
         return dict(sorted_items)
-
-    # -------------------------------------------------------------------------
-    # Revision Recommendations
-    # -------------------------------------------------------------------------
 
     def get_revision_recommendations(self, limit=None):
         """
@@ -406,23 +304,7 @@ class AnalyticsService:
         """
         return self.get_least_practiced_topics(limit=limit)
 
-    # -------------------------------------------------------------------------
-    # Activity Data
-    # -------------------------------------------------------------------------
-
     def get_activity_heatmap_data(self, user_id=None):
-        """
-        Prepare date -> activity count mapping from ACTIVITY records.
-        This data is prepared for the GUI/Matplotlib to draw the coding activity heatmap.
-        Does not generate the heatmap itself.
-        Returns a dictionary mapping date -> count, sorted by date ascending.
-        Example:
-        {
-            date(2026, 9, 10): 3,
-            date(2026, 9, 11): 1,
-            date(2026, 9, 12): 5
-        }
-        """
         if not self.activity_repository:
             return {}
 
@@ -494,9 +376,6 @@ class AnalyticsService:
             "display_text": f"{active_days} of {denominator} days active",
         }
 
-    # -------------------------------------------------------------------------
-    # Problem Practice Counts & Review Suggestions
-    # -------------------------------------------------------------------------
 
     def get_problem_practice_counts(self):
         """
@@ -595,16 +474,13 @@ class AnalyticsService:
         if not counts:
             return None
 
-        # Filter to problems with at least 1 practice record
         practiced = [(pid, cnt) for pid, cnt in counts.items() if cnt > 0]
         if not practiced:
             return None
 
-        # Sort by count descending, then problem_id ascending for deterministic tie-breaking
         practiced.sort(key=lambda x: (-x[1], x[0]))
         top_pid, top_count = practiced[0]
 
-        # Retrieve problem details
         raw_problems = self._get_raw_problems()
         prob_map = {
             p["problem_id"]: p

@@ -11,11 +11,6 @@ from database.connection import close_connection, get_connection
 
 
 class RevisionRepository:
-    """
-    Data Access Layer for Revision operations.
-    Aligned with the ERD table: REVISION.
-    """
-
     def __init__(self, connection_provider=None):
         self.connection_provider = connection_provider or get_connection
 

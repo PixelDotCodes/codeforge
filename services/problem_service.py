@@ -1,14 +1,4 @@
-"""
-Problem Service
-
-This module handles the business logic related to coding problems.
-It receives problem data from the GUI, validates the data, applies
-any required business rules, and then passes valid data to the
-Problem Repository for database operations.
-
-The service layer acts as a bridge between the GUI and the repository,
-so the GUI does not directly interact with the database.
-"""
+"""Business logic and validation for coding problems."""
 
 class ProblemService:
 

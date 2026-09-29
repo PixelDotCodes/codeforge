@@ -1,10 +1,4 @@
-"""
-Analytics View
-
-Provides visualization for problem difficulty breakdown
-and activity trends.
-Connects Tkinter UI -> AnalyticsService -> Repositories.
-"""
+"""Analytics view for difficulty and practice statistics."""
 
 import tkinter as tk
 from tkinter import ttk
@@ -63,7 +57,6 @@ class AnalyticsView(ttk.Frame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        # 1. Header
         header_frame = ttk.Frame(self, style="Content.TFrame")
         header_frame.grid(row=0, column=0, sticky="ew", padx=PAD_OUTER_X, pady=(PAD_OUTER_Y, 12))
 
@@ -80,8 +73,6 @@ class AnalyticsView(ttk.Frame):
             style="HeaderSubtitle.TLabel",
         )
         subtitle_label.pack(anchor="w", pady=(2, 0))
-
-        # 2. Analytics KPI cards (4 cards)
         kpi_frame = ttk.Frame(self, style="Content.TFrame")
         kpi_frame.grid(row=1, column=0, sticky="ew", padx=PAD_OUTER_X, pady=(0, 16))
 
@@ -140,14 +131,11 @@ class AnalyticsView(ttk.Frame):
             self.kpi_labels[kpi_title] = lbl_val
             self.kpi_sub_labels[kpi_title] = lbl_sub
 
-
-        # 3. Chart Placeholder Frame
         charts_frame = ttk.Frame(self, style="Content.TFrame")
         charts_frame.grid(row=2, column=0, sticky="nsew", padx=PAD_OUTER_X, pady=(0, 16))
         charts_frame.columnconfigure(0, weight=1)
         charts_frame.rowconfigure(0, weight=1)
 
-        # Chart 1: Difficulty Breakdown
         self.chart1_card = tk.Frame(
             charts_frame,
             bg=COLOR_CARD_BG,
@@ -180,7 +168,6 @@ class AnalyticsView(ttk.Frame):
         )
         self.chart1_placeholder.pack(fill="both", expand=True)
 
-        # 4. Footer Note
         footer_card = tk.Frame(
             self,
             bg=COLOR_CARD_BG,
@@ -250,7 +237,6 @@ class AnalyticsView(ttk.Frame):
             consistency_text = "0%"
             consistency_sub = "active days ratio"
 
-        # Update KPI labels
         if "Difficulty Ratio (E / M / H)" in self.kpi_labels:
             self.kpi_labels["Difficulty Ratio (E / M / H)"].configure(
                 text=f"{diff_counts.get('Easy', 0)} / {diff_counts.get('Medium', 0)} / {diff_counts.get('Hard', 0)}"
@@ -269,14 +255,12 @@ class AnalyticsView(ttk.Frame):
         if "Practice Consistency" in self.kpi_sub_labels:
             self.kpi_sub_labels["Practice Consistency"].configure(text=consistency_sub)
 
-        # Update Chart 1: Difficulty Distribution
         self._render_difficulty_chart(diff_counts)
 
     def _render_difficulty_chart(self, diff_counts):
         """Render bar chart of difficulty distribution via Matplotlib or fallback."""
         total = sum(diff_counts.values())
 
-        # Clean existing canvas
         if self.chart1_canvas:
             self.chart1_canvas.get_tk_widget().destroy()
             self.chart1_canvas = None

@@ -11,19 +11,11 @@ from database.connection import close_connection, get_connection
 
 
 class ProblemRepository:
-    """Data Access Layer for Problem operations.
-    Aligned with the ERD table: PROBLEMS.
-    """
 
     def __init__(self, connection_provider=None):
-        # Allows injection of a custom connection (e.g., a mock) for testing.
         self.connection_provider = connection_provider or get_connection
 
     def _get_connection(self):
-        """Resolve the connection object.
-        Returns a tuple (connection, should_close) where *should_close* indicates
-        whether the repository created the connection and therefore must close it.
-        """
         if callable(self.connection_provider):
             return self.connection_provider(), True
         return self.connection_provider, False
@@ -60,9 +52,6 @@ class ProblemRepository:
             "problem_url": row[5],
         }
 
-    # ---------------------------------------------------------------------
-    # CRUD operations
-    # ---------------------------------------------------------------------
     def add_problem(self, platform, question_number, title, difficulty, problem_url):
         query = """
             INSERT INTO PROBLEMS (platform, platform_question_no, title, difficulty, problem_url)
@@ -122,7 +111,6 @@ class ProblemRepository:
             updates.append("problem_url = %s")
             params.append(problem_url)
         if not updates:
-            # Nothing to update – just return the existing record.
             return self.get_problem_by_id(problem_id)
         params.append(problem_id)
         query = f"""

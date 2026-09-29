@@ -1,11 +1,4 @@
-"""
-Dashboard View
-
-Provides an overview of problem-solving statistics, streaks,
-LeetCode-style contribution heatmap, suggested questions for review,
-and recent user activity.
-Connects Tkinter UI -> AnalyticsService / RevisionService / ActivityService.
-"""
+"""Dashboard view for coding practice statistics and activity."""
 
 from datetime import date, timedelta
 import tkinter as tk
@@ -278,7 +271,7 @@ class DashboardView(ttk.Frame):
         )
         self.recent_placeholder.pack(fill="both", expand=True)
 
-        # Right Card: Suggested Questions to Review (Replaces "Revisions Due Today")
+        # Right Card: Suggested Questions to Review
         self.revision_card = tk.Frame(
             middle_frame,
             bg=COLOR_CARD_BG,

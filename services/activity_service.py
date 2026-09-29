@@ -1,12 +1,6 @@
 """
 Activity Service
 
-This module handles the business logic related to user problem activities.
-It tracks problem solving attempts (both initial solves and revisions),
-determines the appropriate activity type ("New" vs "Revision"), automatically
-records the activity date, and interfaces with the Activity Repository for
-data access and persistence.
-
 The service layer acts as a bridge between the GUI and the repository,
 so the GUI does not directly interact with the database.
 """
