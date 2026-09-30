@@ -76,12 +76,11 @@ class AnalyticsView(ttk.Frame):
         kpi_frame = ttk.Frame(self, style="Content.TFrame")
         kpi_frame.grid(row=1, column=0, sticky="ew", padx=PAD_OUTER_X, pady=(0, 16))
 
-        for col_idx in range(4):
+        for col_idx in range(3):
             kpi_frame.columnconfigure(col_idx, weight=1, uniform="kpi")
 
         kpis = [
             ("Difficulty Ratio (E / M / H)", "0 / 0 / 0", "problem distribution"),
-            ("Top Practiced Topic", "None", "based on solved problems"),
             ("Top Practiced Problem", "None", "most reviewed problem"),
             ("Practice Consistency", "0%", "active days ratio"),
         ]
@@ -193,7 +192,6 @@ class AnalyticsView(ttk.Frame):
             return
 
         diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
-        top_topic = "None"
         consistency_text = "0%"
 
         top_problem_text = "None"
@@ -203,14 +201,6 @@ class AnalyticsView(ttk.Frame):
             diff_counts = self.analytics_service.get_difficulty_counts()
         except Exception:
             diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
-
-        try:
-            top_topics = self.analytics_service.get_most_practiced_topics(limit=1)
-            if top_topics:
-                first_name, first_count = list(top_topics.items())[0]
-                top_topic = first_name if first_count > 0 else "None"
-        except Exception:
-            top_topic = "None"
 
         try:
             if hasattr(self.analytics_service, "get_top_practiced_problem"):
@@ -241,9 +231,6 @@ class AnalyticsView(ttk.Frame):
             self.kpi_labels["Difficulty Ratio (E / M / H)"].configure(
                 text=f"{diff_counts.get('Easy', 0)} / {diff_counts.get('Medium', 0)} / {diff_counts.get('Hard', 0)}"
             )
-
-        if "Top Practiced Topic" in self.kpi_labels:
-            self.kpi_labels["Top Practiced Topic"].configure(text=str(top_topic))
 
         if "Top Practiced Problem" in self.kpi_labels:
             self.kpi_labels["Top Practiced Problem"].configure(text=str(top_problem_text))
