@@ -13,7 +13,7 @@ It provides a simple way to record solved problems, review practice history, and
 ### Problem Tracking
 
 * Add and manage coding problems
-* Support for LeetCode and GeeksForGeeks
+* Support for coding platforms such as LeetCode and GeeksForGeeks
 * Record question number, title, difficulty, and problem URL
 * Search and filter problems by platform and difficulty
 
@@ -45,7 +45,28 @@ It provides a simple way to record solved problems, review practice history, and
 * Difficulty distribution
 * Practice consistency
 * Activity-based statistics
-* Visual charts powered by Matplotlib
+* Visual chart powered by Matplotlib
+
+---
+
+## Review Suggestion Logic
+
+CodeForge uses a simple, explainable review-suggestion system based on existing practice activity.
+
+Each problem receives a practice count based on its `New` and `Revision` activity records.
+
+Problems are handled as follows:
+
+* Problems with fewer than **5** practice records receive the highest priority.
+* Problems with **5–9** practice records remain eligible after the lower-practice problems.
+* Problems with **10 or more** practice records are removed from the review-suggestion pool.
+* Eligible problems are ordered from least practiced to most practiced.
+* Ties are resolved using the problem ID.
+* The Dashboard displays up to **5** suggested problems by default.
+
+The suggestions are calculated from the current activity data whenever the Dashboard refreshes. They are not permanently stored as recommendations.
+
+The application does not currently implement automatic 1-day, 3-day, or 7-day revision scheduling. Those intervals are only displayed as informational guidance in the UI.
 
 ---
 
@@ -83,25 +104,6 @@ Each layer has a specific responsibility:
 | Matplotlib      | Data visualization      |
 | Git & GitHub    | Version control         |
 
----
-
-## Project Structure
-
-```text
-codeforge/
-├── database/
-│   ├── __init__.py
-│   ├── connection.py
-│   └── schema.sql
-├── repositories/
-├── services/
-├── ui/
-│   └── views/
-├── docs/
-├── main.py
-├── requirements.txt
-└── README.md
-```
 
 ---
 
