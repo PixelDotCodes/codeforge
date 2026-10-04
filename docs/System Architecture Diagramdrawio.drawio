@@ -1,40 +1,40 @@
-<mxfile host="Electron">
-  <diagram name="Page-1" id="IM-TGAb6H9sgiAzoxCYC">
-    <mxGraphModel dx="2260" dy="749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Presentation Layer&lt;div&gt;&lt;br&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Tkinter GUI&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; Dashboard&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Problems&amp;nbsp;&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Revision&amp;nbsp;Analytics&amp;nbsp;&amp;nbsp;&lt;/div&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="270" x="-100" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Service Layer&lt;div&gt;&lt;br&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;ProblemService&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; RevisionService&lt;/div&gt;&lt;div&gt;&amp;nbsp; ActivityService&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;AnalyticsService&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="240" x="260" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;br&gt;Repository Layer&lt;div&gt;&lt;br&gt;ProblemRepository&lt;div&gt;RevisionRepository&lt;/div&gt;&lt;div&gt;ActivityRepository&lt;/div&gt;&lt;div&gt;TopicRepository&lt;/div&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="257" x="251.5" y="365" as="geometry" />
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Database Layer&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;PostgreSQL&lt;/span&gt;&lt;/div&gt;&lt;div&gt;USER&lt;/div&gt;&lt;div&gt;PROBLEMS&amp;nbsp;&lt;/div&gt;&lt;div&gt;REVISION&amp;nbsp;&lt;/div&gt;&lt;div&gt;ACTIVITY&amp;nbsp;&lt;/div&gt;&lt;div&gt;TOPIC&amp;nbsp;&lt;/div&gt;&lt;div&gt;ProblemTopic     &amp;nbsp;&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="150" width="277.5" x="630" y="350" as="geometry" />
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-5" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-1" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="M-EIdzi1hXOnRrZg4T3G-2" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="510" y="360" as="sourcePoint" />
-            <mxPoint x="350" y="120" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-6" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-2" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="M-EIdzi1hXOnRrZg4T3G-3" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="400" y="350" as="sourcePoint" />
-            <mxPoint x="450" y="300" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="M-EIdzi1hXOnRrZg4T3G-7" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-3" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="M-EIdzi1hXOnRrZg4T3G-4" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="380" y="620" as="sourcePoint" />
-            <mxPoint x="430" y="570" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram name="Page-1" id="IM-TGAb6H9sgiAzoxCYC">
+        <mxGraphModel dx="1943" dy="770" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Presentation Layer&lt;div&gt;&lt;br&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Tkinter GUI&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; Dashboard&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Problems&amp;nbsp;&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;Revision&amp;nbsp;Analytics&amp;nbsp;&amp;nbsp;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="120" width="270" x="-100" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Service Layer&lt;div&gt;&lt;br&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;ProblemService&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; RevisionService&lt;/div&gt;&lt;div&gt;&amp;nbsp; ActivityService&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp;AnalyticsService&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="120" width="240" x="260" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;br&gt;Repository Layer&lt;div&gt;&lt;br&gt;ProblemRepository&lt;div&gt;RevisionRepository&lt;/div&gt;&lt;div&gt;ActivityRepository&lt;/div&gt;&lt;div&gt;TopicRepository&lt;/div&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="120" width="257" x="251.5" y="365" as="geometry"/>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Database Layer&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;PostgreSQL&lt;/span&gt;&lt;/div&gt;&lt;div&gt;USER&lt;/div&gt;&lt;div&gt;PROBLEMS&amp;nbsp;&lt;/div&gt;&lt;div&gt;REVISION&amp;nbsp;&lt;/div&gt;&lt;div&gt;ACTIVITY&lt;span style=&quot;background-color: transparent; color: rgb(63, 63, 63);&quot;&gt;&amp;nbsp;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="150" width="277.5" x="630" y="350" as="geometry"/>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-5" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-1" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="M-EIdzi1hXOnRrZg4T3G-2" value="">
+                    <mxGeometry height="50" relative="1" width="50" as="geometry">
+                        <mxPoint x="510" y="360" as="sourcePoint"/>
+                        <mxPoint x="350" y="120" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-6" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-2" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="M-EIdzi1hXOnRrZg4T3G-3" value="">
+                    <mxGeometry height="50" relative="1" width="50" as="geometry">
+                        <mxPoint x="400" y="350" as="sourcePoint"/>
+                        <mxPoint x="450" y="300" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="M-EIdzi1hXOnRrZg4T3G-7" edge="1" parent="1" source="M-EIdzi1hXOnRrZg4T3G-3" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="M-EIdzi1hXOnRrZg4T3G-4" value="">
+                    <mxGeometry height="50" relative="1" width="50" as="geometry">
+                        <mxPoint x="380" y="620" as="sourcePoint"/>
+                        <mxPoint x="430" y="570" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
