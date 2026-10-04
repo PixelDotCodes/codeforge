@@ -101,6 +101,23 @@ class ProblemsView(ttk.Frame):
         )
         self.btn_add.pack(side="left", padx=(0, 8))
 
+        # Copy Link button
+        self.btn_copy_link = tk.Button(
+            filter_card,
+            text="Copy Link",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT_SECONDARY,
+            activebackground="#2563eb",
+            activeforeground="#ffffff",
+            relief="flat",
+            font=FONT_BODY,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            command=self._copy_problem_link,
+        )
+        self.btn_copy_link.pack(side="left", padx=(0, 8))
+
         # Delete Problem button
         self.btn_delete = tk.Button(
             filter_card,
@@ -303,6 +320,29 @@ class ProblemsView(ttk.Frame):
         total = len(self.all_problems)
         showing = len(problems)
         self.status_label.configure(text=f"Showing {showing} of {total} problems")
+
+    def _copy_problem_link(self):
+        """Copy the selected problem's URL to the system clipboard."""
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showwarning("Select Problem", "Please select a problem first.", parent=self)
+            return
+
+        selected_id = selected[0]
+        prob = next(
+            (p for p in self.all_problems if isinstance(p, dict) and str(p.get("problem_id")) == str(selected_id)),
+            None,
+        )
+        url = prob.get("problem_url") if prob else self.tree.set(selected_id, "url")
+
+        if not url or not str(url).strip():
+            messagebox.showwarning("No URL", "The selected problem does not have a URL.", parent=self)
+            return
+
+        url_str = str(url).strip()
+        self.clipboard_clear()
+        self.clipboard_append(url_str)
+        messagebox.showinfo("Success", "Link copied to clipboard.", parent=self)
 
     def _delete_selected_problem(self):
         """Delete the currently selected problem from the database."""
